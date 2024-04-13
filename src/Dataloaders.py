@@ -1,6 +1,6 @@
 from uoishelpers.dataloaders import createIdLoader, createFkeyLoader
 
-from gql_projects.DBDefinitions import (
+from src.DBDefinitions import (
     ProjectCategoryModel,
     ProjectTypeModel,
     ProjectModel,
@@ -23,7 +23,7 @@ dbmodels = {
     "finances": FinanceModel
 }
 
-async def createLoaders(asyncSessionMaker, models=dbmodels):
+def createLoaders(asyncSessionMaker, models=dbmodels):
     def createLambda(loaderName, DBModel):
         return lambda self: createIdLoader(asyncSessionMaker, DBModel)
     
@@ -35,3 +35,8 @@ async def createLoaders(asyncSessionMaker, models=dbmodels):
     return Loaders()
 
 from functools import cache
+
+def createLoadersContext(asyncSessionMaker):
+    return {
+        "loaders": createLoaders(asyncSessionMaker)
+    }

@@ -13,7 +13,7 @@ from uoishelpers.resolvers import (
 )
 from uoishelpers.resolvers import putSingleEntityToDb
 
-from gql_projects.DBDefinitions import BaseModel
+from src.DBDefinitions import BaseModel
 
 # přepsat na naše
 
@@ -25,7 +25,7 @@ from gql_projects.DBDefinitions import BaseModel
 #
 ###########################################################################################################################
 
-from gql_projects.DBDefinitions import (
+from src.DBDefinitions import (
     ProjectModel,
     ProjectTypeModel,
     FinanceModel,

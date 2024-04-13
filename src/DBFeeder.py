@@ -1,4 +1,4 @@
-from gql_projects.DBDefinitions import (
+from src.DBDefinitions import (
     ProjectModel,
     ProjectTypeModel,
     ProjectCategoryModel,

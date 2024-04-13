@@ -9,10 +9,10 @@ import pytest
 
 # from ..uoishelpers.uuid import UUIDColumn
 
-from gql_projects.DBDefinitions import BaseModel
-from gql_projects.DBDefinitions import ProjectModel, ProjectTypeModel, ProjectCategoryModel
-from gql_projects.DBDefinitions import FinanceModel, FinanceTypeModel, FinanceCategory
-from gql_projects.DBDefinitions import MilestoneModel, MilestoneLinkModel
+from src.DBDefinitions import BaseModel
+from src.DBDefinitions import ProjectModel, ProjectTypeModel, ProjectCategoryModel
+from src.DBDefinitions import FinanceModel, FinanceTypeModel, FinanceCategory
+from src.DBDefinitions import MilestoneModel, MilestoneLinkModel
 
 async def prepare_in_memory_sqllite():
     from sqlalchemy.ext.asyncio import create_async_engine
@@ -30,7 +30,7 @@ async def prepare_in_memory_sqllite():
 
     return async_session_maker
 
-from gql_projects.DBFeeder import get_demodata
+from src.DBFeeder import get_demodata
 
 async def prepare_demodata(async_session_maker):
     data = get_demodata()
@@ -48,7 +48,7 @@ async def prepare_demodata(async_session_maker):
     )
 
 
-from gql_projects.Dataloaders import createLoaders
+from src.Dataloaders import createLoaders
 
 
 async def createContext(asyncSessionMaker):

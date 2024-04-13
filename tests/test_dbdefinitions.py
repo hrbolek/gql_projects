@@ -9,10 +9,10 @@ import pytest
 
 # from ..uoishelpers.uuid import UUIDColumn
 
-from gql_projects.DBDefinitions import BaseModel
-from gql_projects.DBDefinitions import ProjectModel, ProjectTypeModel, ProjectCategoryModel
-from gql_projects.DBDefinitions import FinanceModel, FinanceTypeModel, FinanceCategory
-from gql_projects.DBDefinitions import MilestoneModel, MilestoneLinkModel
+from src.DBDefinitions import BaseModel
+from src.DBDefinitions import ProjectModel, ProjectTypeModel, ProjectCategoryModel
+from src.DBDefinitions import FinanceModel, FinanceTypeModel, FinanceCategory
+from src.DBDefinitions import MilestoneModel, MilestoneLinkModel
 
 from shared import prepare_demodata, prepare_in_memory_sqllite, get_demodata
 
@@ -24,7 +24,7 @@ async def test_table_users_feed():
 
     pass
 
-from gql_projects.DBDefinitions import ComposeConnectionString
+from src.DBDefinitions import ComposeConnectionString
 
 
 def test_connection_string():
@@ -34,11 +34,11 @@ def test_connection_string():
     assert "@" in connectionString
 
 
-from gql_projects.DBDefinitions import UUIDColumn
+from src.DBDefinitions import UUIDColumn
 
 
 
-from gql_projects.DBDefinitions import startEngine
+from src.DBDefinitions import startEngine
 
 
 @pytest.mark.asyncio
