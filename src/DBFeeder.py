@@ -308,8 +308,7 @@ def get_demodata():
 
 async def initDB(asyncSessionMaker):
 
-    defaultNoDemo = "False"
-    if defaultNoDemo == os.environ.get("DEMO", defaultNoDemo):
+    if "False" == os.environ.get("DEMODATA", None):
         dbModels = [
             ProjectCategoryModel,
             ProjectTypeModel,
