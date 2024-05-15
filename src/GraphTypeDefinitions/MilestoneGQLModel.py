@@ -167,6 +167,20 @@ async def milestones_link_add(self, info: strawberryA.types.Info, link: Mileston
     result.id = link.previous_id
     return result
 
+@strawberryA.mutation(description="Adds a new milestones link.", permission_classes=[OnlyForAuthentized()])
+async def milestones_link_remove(self, info: strawberryA.types.Info, link: MilestoneLinkAddGQLModel) -> MilestoneResultGQLModel:
+    user = getUserFromInfo(info)
+    link.createdby = uuid.UUID(user["id"])
+    loader = getLoadersFromInfo(info).milestonelinks
+    rows = await loader.filter_by(previous_id=link.previous_id, next_id=link.next_id)
+    row = next(rows, None)
+    result = MilestoneResultGQLModel()
+    result.msg = "fail"
+    if (row):
+        await loader.delete(row.id)
+        result.msg = "ok"
+    return result
+
 @strawberryA.mutation(description="Adds a new milestone.", permission_classes=[OnlyForAuthentized()])
 async def milestone_insert(self, info: strawberryA.types.Info, milestone: MilestoneInsertGQLModel) -> MilestoneResultGQLModel:
     user = getUserFromInfo(info)

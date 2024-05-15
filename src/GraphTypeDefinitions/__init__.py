@@ -127,11 +127,13 @@ class Mutation:
         milestone_insert,
         milestone_update,
         # milestone_delete,
-        milestones_link_add
+        milestones_link_add,
+        milestones_link_remove
     )
     milestone_insert = milestone_insert
     milestone_update = milestone_update
     # milestone_delete = milestone_delete
+    milestones_link_remove = milestones_link_remove
 
     from .ProjectCategoryGQLModel import (
         project_category_insert,
