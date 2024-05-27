@@ -58,15 +58,15 @@ def resolve_valid(self) -> bool:
 #     return await resolve_group(self.group_id)
 
 
-async def resolve_user(user_id):
+async def resolve_user(info, user_id):
     from .externals import UserGQLModel
-    result = None if user_id is None else await UserGQLModel.resolve_reference(user_id)
+    result = None if user_id is None else await UserGQLModel.resolve_reference(info, user_id)
     return result
 
 
 @strawberry.field(description="""User ID """, permission_classes=[OnlyForAuthentized()])
-async def resolve_user_id(self) -> typing.Optional["UserGQLModel"]:
-    return await resolve_user(self.user_id)
+async def resolve_user_id(self, info) -> typing.Optional["UserGQLModel"]:
+    return await resolve_user(info, self.user_id)
 
 
 # async def resolve_roletype(roletype_id):
@@ -90,13 +90,13 @@ def resolve_created(self) -> typing.Optional[datetime.datetime]:
 
 
 @strawberry.field(description="""Who created entity""", permission_classes=[OnlyForAuthentized()])
-async def resolve_createdby(self) -> typing.Optional["UserGQLModel"]:
-    return await resolve_user(self.createdby)
+async def resolve_createdby(self, info) -> typing.Optional["UserGQLModel"]:
+    return await resolve_user(info, self.createdby)
 
 
 @strawberry.field(description="""Who made last change""", permission_classes=[OnlyForAuthentized()])
-async def resolve_changedby(self) -> typing.Optional["UserGQLModel"]:
-    return await resolve_user(self.changedby)
+async def resolve_changedby(self, info) -> typing.Optional["UserGQLModel"]:
+    return await resolve_user(info, self.changedby)
 
 
 RBACObjectGQLModel = typing.Annotated["RBACObjectGQLModel", strawberry.lazy(".externals")]
