@@ -102,6 +102,7 @@ class ProjectWhereFilter:
     value: str
     createdby: uuid.UUID
     valid: bool
+    group_id: uuid.UUID
 
 
 @strawberryA.field(description="""Returns a list of projects""",
