@@ -121,8 +121,8 @@ DEMO = envAssertDefined("DEMO", None)
 JWTPUBLICKEYURL = envAssertDefined("JWTPUBLICKEYURL", None)
 JWTRESOLVEUSERPATHURL = envAssertDefined("JWTRESOLVEUSERPATHURL", None)
 
-assert (DEMO == "True") or (DEMO == "False"), "DEMO environment variable can have only `True` or `False` values"
-DEMO = DEMO == "True"
+assert (DEMO in ["True", "true", "False", "false"]), "DEMO environment variable can have only `True` or `False` values"
+DEMO = DEMO in ["True", "true"]
 
 if DEMO:
     print("####################################################")
