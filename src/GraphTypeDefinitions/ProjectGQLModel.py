@@ -1,197 +1,359 @@
-from typing import List, Union, Annotated, Optional
-import strawberry as strawberryA
+import asyncio
+import dataclasses
 import datetime
 import typing
-import uuid
 import strawberry
-from src.utils.Dataloaders import getLoadersFromInfo, getUserFromInfo
-from .BaseGQLModel import BaseGQLModel
 
-from src.GraphTypeDefinitions._GraphResolvers import (
-    resolve_id,
-    resolve_name,
-    resolve_startdate,
-    resolve_enddate,
-    resolve_created,
-    resolve_lastchange,
-    resolve_createdby,
-    resolve_changedby,
-    createRootResolver_by_id,
-    resolve_rbacobject,
-    resolve_valid
+import strawberry.types
+from uoishelpers.gqlpermissions import (
+    OnlyForAuthentized,
+    SimpleInsertPermission, 
+    SimpleUpdatePermission, 
+    SimpleDeletePermission
+)    
+from uoishelpers.resolvers import (
+    getLoadersFromInfo, 
+    createInputs,
+    createInputs2,
+
+    InsertError, 
+    Insert, 
+    UpdateError, 
+    Update, 
+    DeleteError, 
+    Delete,
+
+    PageResolver,
+    VectorResolver,
+    ScalarResolver
 )
+from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
+from uoishelpers.gqlpermissions.RbacProviderExtension import RbacProviderExtension
+from uoishelpers.gqlpermissions.RbacInsertProviderExtension import RbacInsertProviderExtension
+from uoishelpers.gqlpermissions.UserRoleProviderExtension import UserRoleProviderExtension
+from uoishelpers.gqlpermissions.UserAccessControlExtension import UserAccessControlExtension
+from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAbsoluteAccessControlExtension
 
-from src.GraphPermissions import RoleBasedPermission, OnlyForAuthentized
+from src.DBDefinitions.ProjectDBModel import ProjectDBModel
 
-ProjectTypeGQLModel = Annotated ["ProjectTypeGQLModel", strawberryA.lazy(".ProjectTypeGQLModel")]
-GroupGQLModel = Annotated["GroupGQLModel", strawberry.lazy(".externals")]
-MilestoneGQLModel = Annotated ["MilestoneGQLModel",strawberryA.lazy(".MilestoneGQLModel")]
-FinanceGQLModel = Annotated ["FinanceGQLModel",strawberryA.lazy(".FinanceGQLModel")]
+from .BaseGQLModel import BaseGQLModel, IDType, Relation
 
+@createInputs2
+class ProjectInputFilter:
+    name: str
+    name_en: str
+    description: str
+    project_type_id: IDType
+    masterproject_id: IDType
+    done: bool
+    start_date: datetime.datetime
+    end_date: datetime.datetime
+    id: IDType
 
-@strawberryA.federation.type(
-    keys=["id"], 
-    description="""Entity representing a project"""
+@strawberry.federation.type(
+    description="""Entity representing a Project""",
+    keys=["id"]
 )
 class ProjectGQLModel(BaseGQLModel):
-    @classmethod
-    def getLoader(cls, info):
-        return getLoadersFromInfo(info).projects
+    DBModel = ProjectDBModel
 
-    id = resolve_id
-    name = resolve_name
-    startdate = resolve_startdate
-    enddate = resolve_enddate
-    created = resolve_created
-    lastchange = resolve_lastchange
-    createdby = resolve_createdby
-    changedby = resolve_changedby
-    rbacobject = resolve_rbacobject
-    valid = resolve_valid
 
-    @strawberryA.field(description="""Project type of project""", permission_classes=[OnlyForAuthentized()])
-    async def project_type(self, info: strawberryA.types.Info) -> Optional ["ProjectTypeGQLModel"]:
-        from .ProjectTypeGQLModel import ProjectTypeGQLModel  # Import here to avoid circular dependency
-        result = await ProjectTypeGQLModel.resolve_reference(info, self.projecttype_id)
-        return result
+    path: typing.Optional[str] = strawberry.field(
+        description="""Materialized path representing the group's hierarchical location.  
+Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
+        default=None,
+        permission_classes=[OnlyForAuthentized]
+    )
 
-    @strawberryA.field(description="""List of finances, related to a project""", permission_classes=[OnlyForAuthentized()])
-    async def finances(
-        self, info: strawberryA.types.Info
-    ) -> List["FinanceGQLModel"]:
-        loader = getLoadersFromInfo(info).finances
-        result = await loader.filter_by(project_id=self.id)
-        return result
+    name: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="""Project name assigned by an administrator""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
 
-    @strawberryA.field(description="""List of milestones, related to a project""", permission_classes=[OnlyForAuthentized()])
-    async def milestones(
-        self, info: strawberryA.types.Info
-    ) -> List["MilestoneGQLModel"]:
-        loader = getLoadersFromInfo(info).milestones
-        result = await loader.filter_by(project_id=self.id)
-        return result
+    name_en: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="""Project eng name assigned by an administrator""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
 
-    @strawberry.field(description="""Group, related to a project""", permission_classes=[OnlyForAuthentized()])
-    def group(self) -> Optional["GroupGQLModel"]:
-        from .externals import GroupGQLModel
-        return GroupGQLModel(id=self.group_id)
+    done: typing.Optional[bool] = strawberry.field(
+        default=None,
+        description="""Is the project done?""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+    startdate: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="""Project start date""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]   
+    )
+    enddate: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="""Project end date""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]   
+    )
+    description: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="""Project description""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+
+    project_type_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="""Project type id""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+
+    masterproject_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="""Project parent id""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
     
-    
-    @strawberry.field(description="""Team, related to a project""", permission_classes=[OnlyForAuthentized()])
-    def team(self) -> Union["GroupGQLModel", None]:
-        from .externals import GroupGQLModel
-        return GroupGQLModel(id=self.group_id)
-    
-    
-    
-###########################################################################################################################
-#                                                                                                                         #
-#                                                       Query                                                             #
-#                                                                                                                         #
-###########################################################################################################################
+    masterproject: typing.Optional["ProjectGQLModel"] = strawberry.field(
+        description="""Project which owns this particular project""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=ScalarResolver["ProjectGQLModel"](fkey_field_name="masterproject_id")
+    )
 
-from contextlib import asynccontextmanager
-
-from dataclasses import dataclass
-from .utils import createInputs
-@createInputs
-@dataclass
-class ProjectWhereFilter:
-    name: str
-    type_id: uuid.UUID
-    value: str
-    createdby: uuid.UUID
-    valid: bool
-    group_id: uuid.UUID
+    subprojects: typing.List["ProjectGQLModel"] = strawberry.field(
+        description="""Project children""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=VectorResolver["ProjectGQLModel"](fkey_field_name="masterproject_id", whereType=ProjectInputFilter)
+    )
 
 
-@strawberryA.field(description="""Returns a list of projects""",
-                   permission_classes=[OnlyForAuthentized()])
-async def project_page(
-    self, info: strawberryA.types.Info, skip: int = 0, limit: int = 10,
-    where: Optional[ProjectWhereFilter] = None
-) -> List[ProjectGQLModel]:
-    loader = getLoadersFromInfo(info).projects
-    wf = None if where is None else strawberry.asdict(where)
-    result = await loader.page(skip, limit, where = wf)
-    return result
+
+@strawberry.interface(
+    description="""Project queries"""
+)
+class ProjectQuery:
+    project_by_id: typing.Optional[ProjectGQLModel] = strawberry.field(
+        description="""get a project by its id""",
+        permission_classes=[OnlyForAuthentized],
+        resolver=ProjectGQLModel.load_with_loader
+    )
+
+    project_page: typing.List[ProjectGQLModel] = strawberry.field(
+        description="""get a page of projects""",
+        permission_classes=[OnlyForAuthentized],
+        resolver=PageResolver[ProjectGQLModel](whereType=ProjectInputFilter)
+    )
+
+from uoishelpers.resolvers import TreeInputStructureMixin, InputModelMixin
+@strawberry.input(
+    description="""Input type for creating a Project"""
+)
+class ProjectInsertGQLModel(TreeInputStructureMixin):
+    getLoader = ProjectGQLModel.getLoader
+    masterproject_id: IDType = strawberry.field(
+        description="""Project parent id""",
+        # default=None
+    )
+    name: typing.Optional[str] = strawberry.field(
+        description="""Project name assigned by an administrator""",
+        default=None
+    )
+    name_en: typing.Optional[str] = strawberry.field(
+        description="""Project eng name assigned by an administrator""",
+        default=None
+    )
+    description: typing.Optional[str] = strawberry.field(
+        description="""Project description""",
+        default=None
+    )
+    done: typing.Optional[bool] = strawberry.field(
+        description="""Is the project done?""",
+        default=None
+    )
+    id: typing.Optional[IDType] = strawberry.field(
+        description="""Project id""",
+        default=None
+    )
+    subprojects: typing.Optional[typing.List["ProjectInsertGQLModel"]] = strawberry.field(
+        description="sub projects",
+        default_factory=list
+    )
+    project_type_id: typing.Optional[IDType] = strawberry.field(
+        description="""Project type id""",
+        default=None
+    )
+    rbacobject_id: strawberry.Private[IDType] = None
+    createdby_id: strawberry.Private[IDType] = None
 
 
-project_by_id = createRootResolver_by_id(ProjectGQLModel, description="Returns project by its id")
 
-###########################################################################################################################
-#                                                                                                                         #
-#                                                       Models                                                            #
-#                                                                                                                         #
-###########################################################################################################################
-
-from typing import Optional
-
-@strawberryA.input(description="Definition of a project used for creation")
-class ProjectInsertGQLModel:
-    projecttype_id: uuid.UUID = strawberryA.field(description="The ID of the project type")
-    name: str = strawberryA.field(description="Name/label of the project")
-    
-    valid: Optional[bool] = strawberryA.field(description="Indicates whether the projects data is valid or not (optional)", default=True)
-    id: Optional[uuid.UUID] = strawberryA.field(description="The ID of the project", default=None)
-    startdate: Optional[datetime.datetime] = strawberryA.field(description="Moment when the project starts", default_factory=lambda: datetime.datetime.now())
-    enddate: Optional[datetime.datetime] = strawberryA.field(description="Moment when the project ends", default_factory=lambda: datetime.datetime.now())
-    group_id: Optional[uuid.UUID] = strawberryA.field(description="The ID of the group associated with the project", default=None)
-    content_id: Optional[uuid.UUID] = strawberryA.field(description="The ID of the content associated with the project ", default=None)
-    createdby: strawberry.Private[uuid.UUID] = None
-    rbacobject: strawberry.Private[uuid.UUID] = None
-    
-@strawberryA.input(description="Definition of a project used for update")
+@strawberry.input(
+    description="""Input type for updating a Project"""
+)
 class ProjectUpdateGQLModel:
-    id: uuid.UUID = strawberryA.field(description="The ID of the project")
-    lastchange: datetime.datetime = strawberry.field(description="Timestamp of last change")
+    id: IDType = strawberry.field(
+        description="""Project id""",
+    )
+    lastchange: datetime.datetime = strawberry.field(
+        description="timestamp"
+    )
+    name: typing.Optional[str] = strawberry.field(
+        description="""Project name assigned by an administrator""",
+        default=None
+    )
+    name_en: typing.Optional[str] = strawberry.field(
+        description="""Project eng name assigned by an administrator""",
+        default=None
+    )
+    description: typing.Optional[str] = strawberry.field(
+        description="""Project description""",
+        default=None
+    )
 
-    valid: Optional[bool] = strawberryA.field(description="Indicates whether the projects data is valid or not", default=None)
-    name: Optional[str] = strawberryA.field(description="Updated name/label of the project", default=None)
-    projecttype_id: Optional[uuid.UUID] = strawberryA.field(description="The ID of the project type",default=None)
-    startdate: Optional[datetime.datetime] = strawberryA.field(description="Moment when the project starts", default_factory=lambda: datetime.datetime.now())
-    enddate: Optional[datetime.datetime] = strawberryA.field(description="Moment when the project ends", default_factory=lambda: datetime.datetime.now())
-    group_id: Optional[uuid.UUID] = strawberryA.field(description="The ID of the group associated with the project", default=None)
-    changedby: strawberry.Private[uuid.UUID] = None
+    changedby_id: strawberry.Private[IDType] = None
 
-@strawberryA.type(description="Result of a mutation for a project")
-class ProjectResultGQLModel:
-    id: uuid.UUID = strawberryA.field(description="The ID of the project", default=None)
-    msg: str = strawberryA.field(description="Result of the operation (OK/Fail)", default=None)
+@strawberry.input(
+    description="""Input type for deleting a Project"""
+)
+class ProjectDeleteGQLModel:
+    id: IDType = strawberry.field(
+        description="""Project id""",
+    )
+    lastchange: datetime.datetime = strawberry.field(
+        description="""last change""",
+    )
 
-    @strawberryA.field(description="Returns the project")
-    async def project(self, info: strawberryA.types.Info) -> Union[ProjectGQLModel, None]:
-        result = await ProjectGQLModel.resolve_reference(info, self.id)
-        return result
+@strawberry.interface(
+    description="""Project mutations"""
+)
+class ProjectMutation:
+    @strawberry.mutation(
+        description="""Insert a sub project""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        extensions=[
+            UserAccessControlExtension[InsertError, ProjectGQLModel](
+                roles=[
+                    "administrátor"
+                ]
+            ),
+            UserRoleProviderExtension[InsertError, ProjectGQLModel](),
+            RbacProviderExtension[InsertError, ProjectGQLModel](),
+            LoadDataExtension[InsertError, ProjectGQLModel](
+                getLoader=ProjectGQLModel.getLoader,
+                primary_key_name="masterproject_id"
+            )
+        ],
+    )
+    async def project_insert(
+        self,
+        info: strawberry.Info,
+        project: ProjectInsertGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
+    ) -> typing.Union[ProjectGQLModel, InsertError[ProjectGQLModel]]:
+        # TODO vytvorit podrizeny RBAC objekt pro project, ktery vkladame a ten nastavit jako podrizeny k RBAC objektu master project
+        return await Insert[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
+    
+    @strawberry.mutation(
+        description="""Insert a master project""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        extensions=[
+            UserAccessControlExtension[InsertError, ProjectGQLModel](
+                roles=[
+                    "administrátor"
+                ]
+            ),
+            UserRoleProviderExtension[InsertError, ProjectGQLModel](),
+            RbacProviderExtension[InsertError, ProjectGQLModel](),
+            LoadDataExtension[InsertError, ProjectGQLModel](
+                getLoader=ProjectGQLModel.getLoader,
+                primary_key_name="masterproject_id"
+            )
+        ],
+    )
+    async def project_master_insert(
+        self,
+        info: strawberry.Info,
+        project: ProjectInsertGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
+    ) -> typing.Union[ProjectGQLModel, InsertError[ProjectGQLModel]]:
+        return await Insert[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
 
 
-###########################################################################################################################
-#                                                                                                                         #
-#                                                       Mutations                                                         #
-#                                                                                                                         #
-###########################################################################################################################
 
-@strawberryA.mutation(description="Adds a new project.",
-                      permission_classes=[OnlyForAuthentized()])
-async def project_insert(self, info: strawberryA.types.Info, project: ProjectInsertGQLModel) -> ProjectResultGQLModel:
-    user = getUserFromInfo(info)
-    project.createdby = uuid.UUID(user["id"])
-    loader = getLoadersFromInfo(info).projects
-    row = await loader.insert(project)
-    result = ProjectResultGQLModel()
-    result.msg = "ok"
-    result.id = row.id
-    return result
+    @strawberry.mutation(
+        description="""Update a Project""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        extensions=[
+            UserAccessControlExtension[UpdateError, ProjectGQLModel](
+                roles=[
+                    "administrátor", 
+                ]
+            ),
+            UserRoleProviderExtension[UpdateError, ProjectGQLModel](),
+            RbacProviderExtension[UpdateError, ProjectGQLModel](),
+            LoadDataExtension[UpdateError, ProjectGQLModel]()
+        ],
+    )
+    async def project_update(
+        self,
+        info: strawberry.Info,
+        project: ProjectUpdateGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
+    ) -> typing.Union[ProjectGQLModel, UpdateError[ProjectGQLModel]]:
+        return await Update[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
+    
 
-@strawberryA.mutation(description="Update the project.",
-                      permission_classes=[OnlyForAuthentized()])
-async def project_update(self, info: strawberryA.types.Info, project: ProjectUpdateGQLModel) -> ProjectResultGQLModel:
-    user = getUserFromInfo(info)
-    project.changedby = uuid.UUID(user["id"])
-    loader = getLoadersFromInfo(info).projects
-    row = await loader.update(project)
-    result = ProjectResultGQLModel()
-    result.msg = "ok"
-    result.id = project.id
-    result.msg = "ok" if (row is not None) else "fail"
-    return result
+    @strawberry.mutation(
+        description="""Delete a Project""",
+        permission_classes=[
+            OnlyForAuthentized,
+        ],
+        extensions=[
+            UserAccessControlExtension[DeleteError, ProjectGQLModel](
+                roles=[
+                    "administrátor", 
+                ]
+            ),
+            UserRoleProviderExtension[DeleteError, ProjectGQLModel](),
+            RbacProviderExtension[DeleteError, ProjectGQLModel](),
+            LoadDataExtension[DeleteError, ProjectGQLModel]()
+        ],
+    )   
+    async def project_delete(
+        self,
+        info: strawberry.Info,
+        project: ProjectDeleteGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
+    ) -> typing.Optional[DeleteError[ProjectGQLModel]]:
+        return await Delete[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
+    

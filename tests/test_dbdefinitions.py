@@ -3,18 +3,16 @@ import sys
 import asyncio
 
 # setting path
-sys.path.append("../gql_projects")
+# sys.path.append("../gql_projects")
 
 import pytest
 
 # from ..uoishelpers.uuid import UUIDColumn
 
-from src.DBDefinitions import BaseModel
-from src.DBDefinitions import ProjectModel, ProjectTypeModel, ProjectCategoryModel
-from src.DBDefinitions import FinanceModel, FinanceTypeModel, FinanceCategory
-from src.DBDefinitions import MilestoneModel, MilestoneLinkModel
+from src.DBDefinitions import BaseDBModel, ProjectDBModel, ProjectTypeDBModel, ProjectDependencyDBModel
+from src.DBDefinitions import FinanceDBModel, FinanceTypeDBModel, FinanceTransferDBModel
 
-from shared import prepare_demodata, prepare_in_memory_sqllite, get_demodata
+from .shared import prepare_demodata, prepare_in_memory_sqllite, get_demodata
 
 
 @pytest.mark.asyncio
@@ -34,7 +32,7 @@ def test_connection_string():
     assert "@" in connectionString
 
 
-from src.DBDefinitions import UUIDColumn
+# from src.DBDefinitions import UUIDColumn
 
 
 

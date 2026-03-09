@@ -8,6 +8,7 @@ sqlalchemy-cockroachdb
 
 sqlalchemy
 sqlalchemy_utils
+uuid6
 
 pydantic
 starlette

@@ -1,13 +1,12 @@
-from .FinanceCategory import FinanceCategory
-from .FinanceModel import FinanceModel
-from .FinanceTypeModel import FinanceTypeModel
-from .MilestoneLinkModel import MilestoneLinkModel
-from .MilestoneModel import MilestoneModel
-from .ProjectCategoryModel import ProjectCategoryModel
-from .ProjectTypeModel import ProjectTypeModel
-from .ProjectModel import ProjectModel
-from .StatementOfWorkModel import StatementOfWorkModel
-from .BaseModel import BaseModel
+
+from .BaseDBModel import BaseDBModel
+from .FinanceDBModel import FinanceDBModel
+from .ProjectDBModel import ProjectDBModel
+from .FinanceTypeDBModel import FinanceTypeDBModel
+from .ProjectTypeDBModel import ProjectTypeDBModel
+from .ProjectDependencyDBModel import ProjectDependencyDBModel
+from .FinanceTransferDBModel import FinanceTransferDBModel
+
 import sqlalchemy
 
 import os
@@ -17,22 +16,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 
 
-
-
-
-
 async def startEngine(connectionstring, makeDrop=False, makeUp=True):
     """Provede nezbytne ukony a vrati asynchronni SessionMaker"""
     asyncEngine = create_async_engine(connectionstring)
 
     async with asyncEngine.begin() as conn:
         if makeDrop:
-            await conn.run_sync(BaseModel.metadata.drop_all)
+            await conn.run_sync(BaseDBModel.metadata.drop_all)
             print("BaseModel.metadata.drop_all finished")
         if makeUp:
             try:
-                await conn.run_sync(BaseModel.metadata.create_all)
-                print("BaseModel.metadata.create_all finished")
+                await conn.run_sync(BaseDBModel.metadata.create_all)
+                print("BaseDBModel.metadata.create_all finished")
             except sqlalchemy.exc.NoReferencedTableError as e:
                 print("Caught NoReferencedTableError:", e)
                 print("Unable automatically to create tables")

@@ -1,156 +1,246 @@
-import strawberry as strawberryA
-import uuid
-from typing import List, Annotated, Optional, Union
-from contextlib import asynccontextmanager
+import asyncio
+import dataclasses
 import datetime
-
-from .BaseGQLModel import BaseGQLModel
-
-from src.GraphPermissions import RoleBasedPermission, OnlyForAuthentized
-
-from src.GraphTypeDefinitions._GraphResolvers import (
-    resolve_id,
-    resolve_name,
-    resolve_name_en,
-    resolve_created,
-    resolve_lastchange,
-    resolve_createdby,
-    resolve_changedby,
-    createRootResolver_by_id,
-    resolve_rbacobject,
-    resolve_valid
-)
+import typing
 import strawberry
-from src.utils.Dataloaders import getLoadersFromInfo, getUserFromInfo
+
+import strawberry.types
+from uoishelpers.gqlpermissions import (
+    OnlyForAuthentized,
+    SimpleInsertPermission, 
+    SimpleUpdatePermission, 
+    SimpleDeletePermission
+)    
+from uoishelpers.resolvers import (
+    getLoadersFromInfo, 
+    createInputs,
+    createInputs2,
+
+    InsertError, 
+    Insert, 
+    UpdateError, 
+    Update, 
+    DeleteError, 
+    Delete,
+
+    PageResolver,
+    VectorResolver,
+    ScalarResolver
+)
+from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
+from uoishelpers.gqlpermissions.RbacProviderExtension import RbacProviderExtension
+from uoishelpers.gqlpermissions.RbacInsertProviderExtension import RbacInsertProviderExtension
+from uoishelpers.gqlpermissions.UserRoleProviderExtension import UserRoleProviderExtension
+from uoishelpers.gqlpermissions.UserAccessControlExtension import UserAccessControlExtension
+from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAbsoluteAccessControlExtension
+
+from src.DBDefinitions import FinanceTypeDBModel
+
+from .BaseGQLModel import BaseGQLModel, IDType, Relation
+
+@createInputs2
+class FinanceTypeInputFilter:
+    name: str
+    name_en: str
+    id: IDType
 
 
-FinanceGQLModel = Annotated ["FinanceGQLModel",strawberryA.lazy(".FinanceGQLModel")]
-FinanceCategoryGQLModel = Annotated ["FinanceCategoryGQLModel",strawberryA.lazy(".FinanceCategoryGQLModel")]
-
-
-@strawberryA.federation.type(
-    keys=["id"], description="""Entity representing a finance type"""
+@strawberry.federation.type(
+    description="""Entity representing a Event type""",
+    keys=["id"]
 )
 class FinanceTypeGQLModel(BaseGQLModel):
-    @classmethod
-    def getLoader(cls, info):
-        return getLoadersFromInfo(info).financetypes
+    DBModel = FinanceTypeDBModel
 
-    id = resolve_id
-    name = resolve_name
-    name_en = resolve_name_en
-    changedby = resolve_changedby
-    lastchange = resolve_lastchange
-    created = resolve_created
-    createdby = resolve_createdby
-    rbacobject = resolve_rbacobject
-    valid = resolve_valid
+    path: typing.Optional[str] = strawberry.field(
+        description="""Materialized path representing the type's hierarchical location.  """,
+        default=None,
+        permission_classes=[OnlyForAuthentized]
+    )
+
+    name: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="""Type name""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+
+    name_en: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="""Type eng name""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+
+    mastertype_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="""Parent type id""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
     
-    @strawberryA.field(description="""List of finances, related to finance type""", permission_classes=[OnlyForAuthentized()])
-    async def finances(
-        self, info: strawberryA.types.Info
-    ) -> List["FinanceGQLModel"]:
-        loader = getLoadersFromInfo(info).financetypes
-        result = await loader.filter_by(id = self.id)
-        return result
 
-    
-    @strawberryA.field(description="""List of category Id's, related to finance type""", permission_classes=[OnlyForAuthentized()])
-    async def category(self, info: strawberryA.types.Info) -> Optional ["FinanceCategoryGQLModel"]:
-        from .FinanceCategoryGQLModel import FinanceCategoryGQLModel  # Import here to avoid circular dependency
-        result = await FinanceCategoryGQLModel.resolve_reference(info, self.category_id)
-        return result
-    
-###########################################################################################################################
-#                                                                                                                         #
-#                                                       Query                                                             #
-#                                                                                                                         #
-###########################################################################################################################
+    mastertype: typing.Optional["FinanceTypeGQLModel"] = strawberry.field(
+        description="""Type which owns this particular type""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=ScalarResolver["FinanceTypeGQLModel"](fkey_field_name="mastertype_id")
+    )
 
-from dataclasses import dataclass
-from .utils import createInputs
-@createInputs
-@dataclass
-class FinanceTypeWhereFilter:
-    name: str
-    type_id: uuid.UUID
-    value: str
-    valid: bool
+    subtypes: typing.List["FinanceTypeGQLModel"] = strawberry.field(
+        description="""Type children""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=VectorResolver["FinanceTypeGQLModel"](fkey_field_name="mastertype_id", whereType=FinanceTypeInputFilter)
+    )
 
-@strawberryA.field(description="""Returns a list of finance types""", permission_classes=[OnlyForAuthentized()])
-async def finance_type_page(
-    self, info: strawberryA.types.Info, skip: int = 0, limit: int = 10,
-    where: Optional[FinanceTypeWhereFilter] = None
-) -> List[FinanceTypeGQLModel]:
-    loader = getLoadersFromInfo(info).financetypes
-    wf = None if where is None else strawberry.asdict(where)
-    result = await loader.page(skip, limit, where = wf)
-    return result
 
-finance_type_by_id = createRootResolver_by_id(FinanceTypeGQLModel, description="Returns finance type by its id")
 
-###########################################################################################################################
-#                                                                                                                         #
-#                                                       Models                                                            #
-#                                                                                                                         #
-###########################################################################################################################
+@strawberry.interface(
+    description="""Event queries"""
+)
+class FinanceTypeQuery:
+    finance_type_by_id: typing.Optional[FinanceTypeGQLModel] = strawberry.field(
+        description="""get a event by its id""",
+        permission_classes=[OnlyForAuthentized],
+        resolver=FinanceTypeGQLModel.load_with_loader
+    )
 
-@strawberryA.input(description="Definition of a finance type used for creation")
-class FinanceTypeInsertGQLModel:
-    name: str = strawberryA.field(description="Name/label of the finance type")
-    category_id: uuid.UUID = strawberryA.field(description="The ID of the finance category")
-    
-    name_en: Optional[str] = strawberryA.field(description="Name/label of the finance type in English",default=None)
-    valid: Optional[bool] = strawberryA.field(description="Indicates whether the financial data is valid or not", default=True)
-    id: Optional[uuid.UUID] = strawberryA.field(description="The ID of the finance type data", default=None)
-    createdby: strawberry.Private[uuid.UUID] = None
-    rbacobject: strawberry.Private[uuid.UUID] = None
+    finance_type_page: typing.List[FinanceTypeGQLModel] = strawberry.field(
+        description="""get a page of events""",
+        permission_classes=[OnlyForAuthentized],
+        resolver=PageResolver[FinanceTypeGQLModel](whereType=FinanceTypeInputFilter)
+    )
 
-@strawberryA.input(description="Definition of finance type used for update")
+from uoishelpers.resolvers import TreeInputStructureMixin, InputModelMixin
+@strawberry.input(
+    description="""Input type for creating a Event"""
+)
+class FinanceTypeInsertGQLModel(TreeInputStructureMixin):
+    getLoader = FinanceTypeGQLModel.getLoader
+    mastertype_id: IDType = strawberry.field(
+        description="""Event parent id""",
+        # default=None
+    )
+    name: typing.Optional[str] = strawberry.field(
+        description="""Event name assigned by an administrator""",
+        default=None
+    )
+    name_en: typing.Optional[str] = strawberry.field(
+        description="""Event eng name assigned by an administrator""",
+        default=None
+    )
+
+    id: typing.Optional[IDType] = strawberry.field(
+        description="""Event id""",
+        default=None
+    )
+    subtypes: typing.Optional[typing.List["FinanceTypeInsertGQLModel"]] = strawberry.field(
+        description="sub event types",
+        default_factory=list
+    )
+
+    rbacobject_id: strawberry.Private[IDType] = None
+    createdby_id: strawberry.Private[IDType] = None
+
+
+
+@strawberry.input(
+    description="""Input type for updating a Event"""
+)
 class FinanceTypeUpdateGQLModel:
-    id: uuid.UUID = strawberryA.field(description="The ID of the finance type")
-    lastchange: datetime.datetime = strawberry.field(description="Timestamp of last change")
+    id: IDType = strawberry.field(
+        description="""Event id""",
+    )
+    lastchange: datetime.datetime = strawberry.field(
+        description="timestamp"
+    )
+    name: typing.Optional[str] = strawberry.field(
+        description="""Event name assigned by an administrator""",
+        default=None
+    )
+    name_en: typing.Optional[str] = strawberry.field(
+        description="""Event eng name assigned by an administrator""",
+        default=None
+    )
+    changedby_id: strawberry.Private[IDType] = None
 
-    valid: Optional[bool] = strawberryA.field(description="Indicates whether the financial data is valid or not", default=None)
-    name: Optional[str] = strawberryA.field(description="Updated name/label of the finance category", default=None)
-    name_en: Optional[str] = strawberryA.field(description="Updated name/label of the finance category in English", default=None)
-    changedby: strawberry.Private[uuid.UUID] = None
+@strawberry.input(
+    description="""Input type for deleting a Event"""
+)
+class FinanceTypeDeleteGQLModel:
+    id: IDType = strawberry.field(
+        description="""Event id""",
+    )
+    lastchange: datetime.datetime = strawberry.field(
+        description="""last change""",
+    )
 
-@strawberryA.type(description="Result of a mutation result of finance type")
-class FinanceTypeResultGQLModel:
-    id: uuid.UUID = strawberryA.field(description="The ID of the finance type", default=None)
-    msg: str = strawberryA.field(description="Result of the operation (OK/Fail)", default=None)
+@strawberry.interface(
+    description="""Event mutations"""
+)
+class FinanceTypeMutation:
+    @strawberry.mutation(
+        description="""Insert a event type, it could be connected to master event type""",
+        permission_classes=[
+            OnlyForAuthentized
+            # SimpleInsertPermission[FinanceTypeGQLModel](roles=["administrátor"])
+        ],
+        extensions=[
+            UserAbsoluteAccessControlExtension[InsertError, FinanceTypeGQLModel](
+                roles=["superadmin"]
+            )
+        ],
+    )
+    async def finance_type_insert(
+        self,
+        info: strawberry.Info,
+        event: FinanceTypeInsertGQLModel,
+    ) -> typing.Union[FinanceTypeGQLModel, InsertError[FinanceTypeGQLModel]]:
+        return await Insert[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
+    
 
-    @strawberryA.field(description="Returns the finance type", permission_classes=[OnlyForAuthentized()])
-    async def finance(self, info: strawberryA.types.Info) -> Union[FinanceTypeGQLModel, None]:
-        result = await FinanceTypeGQLModel.resolve_reference(info, self.id)
-        return result
+    @strawberry.mutation(
+        description="""Update a Event type.""",
+        permission_classes=[
+            OnlyForAuthentized
+            # SimpleUpdatePermission[FinanceTypeGQLModel](roles=["administrátor"])
+        ],
+        extensions=[
+            UserAbsoluteAccessControlExtension[InsertError, FinanceTypeGQLModel](
+                roles=["superadmin"]
+            )
+        ],
+    )
+    async def finance_type_update(
+        self,
+        info: strawberry.Info,
+        event: FinanceTypeUpdateGQLModel
+    ) -> typing.Union[FinanceTypeGQLModel, UpdateError[FinanceTypeGQLModel]]:
+        return await Update[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
+    
 
-###########################################################################################################################
-#                                                                                                                         #
-#                                                       Mutations                                                         #
-#                                                                                                                         #
-###########################################################################################################################
-
-@strawberryA.mutation(description="Adds a new finance type.", permission_classes=[OnlyForAuthentized()])
-async def finance_type_insert(self, info: strawberryA.types.Info, finance: FinanceTypeInsertGQLModel) -> FinanceTypeResultGQLModel:
-    user = getUserFromInfo(info)
-    finance.createdby = uuid.UUID(user["id"])
-    loader = getLoadersFromInfo(info).financetypes
-    row = await loader.insert(finance)
-    result = FinanceTypeResultGQLModel()
-    result.msg = "ok"
-    result.id = row.id
-    return result
-
-@strawberryA.mutation(description="Update the finance type.", permission_classes=[OnlyForAuthentized()])
-async def finance_type_update(self, info: strawberryA.types.Info, finance: FinanceTypeUpdateGQLModel) -> FinanceTypeResultGQLModel:
-    user = getUserFromInfo(info)
-    finance.createdby = uuid.UUID(user["id"])
-    loader = getLoadersFromInfo(info).financetypes
-    row = await loader.update(finance)
-    result = FinanceTypeResultGQLModel()
-    result.msg = "ok"
-    result.id = finance.id
-    result.msg = "ok" if (row is not None) else "fail"
-    return result
+    @strawberry.mutation(
+        description="""Delete a Event type""",
+        permission_classes=[
+            OnlyForAuthentized,
+            # SimpleDeletePermission[FinanceTypeGQLModel](roles=["administrátor"])
+        ],
+        extensions=[
+            UserAbsoluteAccessControlExtension[InsertError, FinanceTypeGQLModel](
+                roles=["superadmin"]
+            )
+        ],
+    )   
+    async def finance_type_delete(
+        self,
+        info: strawberry.Info,
+        event: FinanceTypeDeleteGQLModel
+    ) -> typing.Optional[DeleteError[FinanceTypeGQLModel]]:
+        return await Delete[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
+    

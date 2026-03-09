@@ -1,0 +1,123 @@
+{
+    "projects": [
+        {
+            "_chunk": 0,
+            "id": "ad43f501-ffc7-40e1-b6a2-a0199021e86b",
+            "created": "2024-08-11T21:45:06.972967",
+            "lastchange": "2024-08-11T21:45:06.972967",
+            "name": "Projekt teoretické matematiky",
+            "__typename": "ProjectGQLModel",
+            "startdate": "2021-01-01T00:00:00",
+            "enddate": "2023-12-31T00:00:00",
+            "project_type_id": "a825d8e1-2e60-4884-afdb-25642db581d8"
+        },
+        {
+            "_chunk": 1,
+            "id": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
+            "created": "2024-08-11T21:45:06.972967",
+            "lastchange": "2024-08-11T21:45:06.972967",
+            "name": "Dílčí projekt",
+            "__typename": "ProjectGQLModel",
+            "startdate": "2021-01-01T00:00:00",
+            "enddate": "2021-12-31T00:00:00",
+            "masterproject_id": "ad43f501-ffc7-40e1-b6a2-a0199021e86b",
+            "project_type_id": "a825d8e1-2e60-4884-afdb-25642db581d8"
+        },
+        {
+            "_chunk": 1,
+            "id": "360cd2e9-b914-4e56-bc61-19bb7a70ff63",
+            "created": "2024-08-11T21:45:06.972967",
+            "lastchange": "2024-08-11T21:45:06.972967",
+            "name": "Dílčí projekt",
+            "__typename": "ProjectGQLModel",
+            "startdate": "2022-01-01T00:00:00",
+            "enddate": "2022-12-31T00:00:00",
+            "masterproject_id": "ad43f501-ffc7-40e1-b6a2-a0199021e86b",
+            "project_type_id": "a825d8e1-2e60-4884-afdb-25642db581d8"
+        }
+    ],
+    "project_dependencies": [
+        {
+            "id": "3246ba48-a169-4ac3-8aee-41ca946267c4",
+            "previous_id": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
+            "next_id": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
+        }
+    ],
+    "projecttypes": [
+        {
+            "_chunk": 0,
+            "id": "818c8919-99b5-4244-bdfe-f28013af3717",
+            "name": "grantové",
+            "name_en": "grants"
+        },
+        {
+            "_chunk": 1,
+            "id": "a825d8e1-2e60-4884-afdb-25642db581d8",
+            "name": "GAČR",
+            "name_en": "GAČR",
+            "__typename": "ProjectTypeGQLModel"
+        },
+        {
+            "_chunk": 1,
+            "id": "6abcd26b-4f9b-4b49-8a5d-8ec9880acf3e",
+            "name": "TAČR",
+            "name_en": "TAČR",
+            "__typename": "ProjectTypeGQLModel"
+        },
+        {
+            "_chunk": 1,
+            "id": "d5d91230-6e52-4ebf-b467-bfe89311e31a",
+            "name": "MV",
+            "name_en": "MV",
+            "__typename": "ProjectTypeGQLModel"
+        },
+        {
+            "_chunk": 1,
+            "id": "4a9a0039-3363-4af7-866e-ee172bfb02ff",
+            "name": "MŠMT",
+            "name_en": "MŠMT",
+            "__typename": "ProjectTypeGQLModel"
+        }
+    ],    
+    "finances": [
+        {
+            "_chunk": 0,
+            "id": "5f542217-59b6-4a73-afa5-8df74b7a1399",
+            "name": "hlavní budget",
+            "description": "",
+            "finance_type_id": "9e37059c-de2c-4112-9009-559c8b0396f1"
+        },
+        {
+            "_chunk": 1,
+            "id": "d00b9e04-6a63-484d-84be-ce16745ad3b1",
+            "name": "dílčí budget",
+            "masterfinance_id": "5f542217-59b6-4a73-afa5-8df74b7a1399",
+            "description": "",
+            "finance_type_id": "9e37059c-de2c-4112-9009-559c8b0396f1"
+        }
+    ],
+    "finance_types": [
+        {
+            "_chunk": 0,
+            "id": "9e37059c-de2c-4112-9009-559c8b0396f1",
+            "name": "projektové finance"
+        },
+        {
+            "_chunk": 1,
+            "id": "630900ae-239b-4533-90df-7aacf59316a4",
+            "mastertype_id": "9e37059c-de2c-4112-9009-559c8b0396f1",
+            "name": "osobní náklady",
+            "name_en": "personal"
+        }
+    ],
+    "finance_transfers": [
+        {
+            "id": "73977aab-9bc7-495d-bc8b-5d9d1f377316",
+            "name": "dedikace financí",
+            "finance_source_id": "5f542217-59b6-4a73-afa5-8df74b7a1399",
+            "finance_destination_id": "d00b9e04-6a63-484d-84be-ce16745ad3b1",
+            "startdate": "2026-03-09T08:00:00",
+            "amount": 23000
+        }
+    ]
+}

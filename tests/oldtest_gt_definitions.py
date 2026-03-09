@@ -11,11 +11,11 @@ import pytest
 
 from src.GraphTypeDefinitions import schema
 
-from shared import (
+from .shared import (
     prepare_demodata,
     prepare_in_memory_sqllite,
     get_demodata,
-    createContext,
+    # createContext,
 )
 
 

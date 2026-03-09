@@ -9,10 +9,8 @@ import pytest
 
 # from ..uoishelpers.uuid import UUIDColumn
 
-from src.DBDefinitions import BaseModel
-from src.DBDefinitions import ProjectModel, ProjectTypeModel, ProjectCategoryModel
-from src.DBDefinitions import FinanceModel, FinanceTypeModel, FinanceCategory
-from src.DBDefinitions import MilestoneModel, MilestoneLinkModel
+from src.DBDefinitions import BaseDBModel, ProjectDBModel, ProjectTypeDBModel, ProjectDependencyDBModel
+from src.DBDefinitions import FinanceDBModel, FinanceTypeDBModel, FinanceTransferDBModel
 
 async def prepare_in_memory_sqllite():
     from sqlalchemy.ext.asyncio import create_async_engine
@@ -22,7 +20,7 @@ async def prepare_in_memory_sqllite():
     asyncEngine = create_async_engine("sqlite+aiosqlite:///:memory:")
     # asyncEngine = create_async_engine("sqlite+aiosqlite:///data.sqlite")
     async with asyncEngine.begin() as conn:
-        await conn.run_sync(BaseModel.metadata.create_all)
+        await conn.run_sync(BaseDBModel.metadata.create_all)
 
     async_session_maker = sessionmaker(
         asyncEngine, expire_on_commit=False, class_=AsyncSession
@@ -40,19 +38,22 @@ async def prepare_demodata(async_session_maker):
     await ImportModels(
         async_session_maker,
         [
-            ProjectModel, ProjectTypeModel, ProjectCategoryModel,
-            FinanceModel, FinanceTypeModel, FinanceCategory,
-            MilestoneModel, MilestoneLinkModel
+            ProjectTypeDBModel, 
+            FinanceTypeDBModel, 
+            ProjectDBModel, 
+            ProjectDependencyDBModel, 
+            FinanceDBModel, 
+            FinanceTransferDBModel
         ],
         data,
     )
 
 
-from src.Dataloaders import createLoaders
+# from src.Dataloaders import createLoaders
 
 
-async def createContext(asyncSessionMaker):
-    return {
-        "asyncSessionMaker": asyncSessionMaker,
-        "all": await createLoaders(asyncSessionMaker),
-    }
+# async def createContext(asyncSessionMaker):
+#     return {
+#         "asyncSessionMaker": asyncSessionMaker,
+#         "all": await createLoaders(asyncSessionMaker),
+#     }
