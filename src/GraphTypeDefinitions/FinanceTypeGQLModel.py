@@ -201,6 +201,7 @@ class FinanceTypeMutation:
         self,
         info: strawberry.Info,
         event: FinanceTypeInsertGQLModel,
+        user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTypeGQLModel, InsertError[FinanceTypeGQLModel]]:
         return await Insert[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
     
@@ -220,7 +221,8 @@ class FinanceTypeMutation:
     async def finance_type_update(
         self,
         info: strawberry.Info,
-        event: FinanceTypeUpdateGQLModel
+        event: FinanceTypeUpdateGQLModel,
+        user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTypeGQLModel, UpdateError[FinanceTypeGQLModel]]:
         return await Update[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
     
@@ -240,7 +242,8 @@ class FinanceTypeMutation:
     async def finance_type_delete(
         self,
         info: strawberry.Info,
-        event: FinanceTypeDeleteGQLModel
+        event: FinanceTypeDeleteGQLModel,
+        user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[FinanceTypeGQLModel]]:
         return await Delete[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
     

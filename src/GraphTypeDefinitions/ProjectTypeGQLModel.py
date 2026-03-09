@@ -201,6 +201,7 @@ class ProjectTypeMutation:
         self,
         info: strawberry.Info,
         event: ProjectTypeInsertGQLModel,
+        user_roles: typing.List[dict],
     ) -> typing.Union[ProjectTypeGQLModel, InsertError[ProjectTypeGQLModel]]:
         return await Insert[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=event)
     
@@ -220,7 +221,8 @@ class ProjectTypeMutation:
     async def project_type_update(
         self,
         info: strawberry.Info,
-        event: ProjectTypeUpdateGQLModel
+        event: ProjectTypeUpdateGQLModel,
+        user_roles: typing.List[dict],
     ) -> typing.Union[ProjectTypeGQLModel, UpdateError[ProjectTypeGQLModel]]:
         return await Update[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=event)
     
@@ -240,7 +242,8 @@ class ProjectTypeMutation:
     async def project_type_delete(
         self,
         info: strawberry.Info,
-        event: ProjectTypeDeleteGQLModel
+        event: ProjectTypeDeleteGQLModel,
+        user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[ProjectTypeGQLModel]]:
         return await Delete[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=event)
     

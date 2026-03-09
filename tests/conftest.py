@@ -76,8 +76,8 @@ async def FullContext(ContextBase, UserPatch):
 @pytest.fixture
 def SchemaExecutor(FullContext):
     # GQLUG_ENDPOINT_URL
-    monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setenv("GQLUG_ENDPOINT_URL", "http://localhost:8125/gql")
+    # monkeypatch = pytest.MonkeyPatch()
+    # monkeypatch.setenv("GQLUG_ENDPOINT_URL", "http://localhost:8125/gql")
 
     from uoishelpers.schema import WhoAmIExtension
     # schema.extensions.append(WhoAmIExtension)
@@ -89,7 +89,10 @@ def SchemaExecutor(FullContext):
         filter(lambda ex: ex not in [WhoAmIExtension, RolePermissionSchemaExtension], schema.extensions)
     )
     FullContext["user"] = {
-        "id": "30bc16ac-946a-4d73-a1ad-3fd3ddd038f7"
+        "id": "30bc16ac-946a-4d73-a1ad-3fd3ddd038f7",
+        "roles": [{
+            "roletype": {"name": "superadmin"}
+        }]
     }
     async def Execute(query, variable_values={}):
         result = await schema.execute(query=query, variable_values=variable_values, context_value=FullContext)
