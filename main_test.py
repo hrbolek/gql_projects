@@ -120,7 +120,10 @@ class WhoAmIExtension_Debug(WhoAmIExtension):
 
 class RolePermissionSchemaExtension_Debug(RolePermissionSchemaExtension):
     async def load(self, key):
-        return current_user.get("roles", [])
+        response = {
+            "result": current_user.get("roles", [])
+        }
+        return response
 
     async def on_execute(self):
         context = self.execution_context
