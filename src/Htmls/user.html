@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="cs">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>User editor</title>
+    <title>User selector</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -18,24 +16,22 @@
             background: #f8f9fa;
         }
 
-        textarea.jsonpaste {
-            font-family: ui-monospace, monospace;
-            min-height: 200px;
+        .user-card.active {
+            border: 2px solid #0d6efd;
+            box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.15);
         }
 
-        pre.preview {
-            min-height: 250px;
-            white-space: pre-wrap;
+        .role-badge {
+            font-size: 0.85rem;
         }
     </style>
 </head>
-
 <body>
 
     <div class="container-fluid bg-primary text-white p-3">
         <div class="container">
-            <h3 class="mb-0">User editor</h3>
-            <small>React + JSON paste</small>
+            <h3 class="mb-0">User selector</h3>
+            <small>Výběr current_user z available_users</small>
         </div>
     </div>
 
@@ -43,403 +39,202 @@
         <div id="root"></div>
     </div>
 
-    <script>
-        var default_user = {
-            "id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-            "fullname": "Zdeňka Šimečková",
-            "email": "Zdenka.Simeckova@world.com",
-            "roles": [
-                {
-                    "valid": true,
-                    "group": {
-                        "id": "d75d64a4-bf5f-43c5-9c14-8fda7aff6c09",
-                        "name": "Univerzita"
-                    },
-                    "roletype": {
-                        "id": "ced46aa4-3217-4fc1-b79d-f6be7d21c6b6",
-                        "name": "administrátor"
-                    }
-                },
-                {
-                    "valid": true,
-                    "group": {
-                        "id": "119086b2-d24d-43fe-89f3-d5365e5ad7e7",
-                        "name": "Fakulta vojenské přípravy"
-                    },
-                    "roletype": {
-                        "id": "b87aed46-dfc3-40f8-ad49-03f4138c7478",
-                        "name": "zpracovatel gdpr"
-                    }
-                }
-            ]
-        }
-        try {
-            window.__INITIAL_USER__ = __CURRENT_USER_JSON__
-        }
-        catch {
-            window.__INITIAL_USER__ = default_user
-        }
-
-    </script>
-
     <script type="text/babel">
+        const { useEffect, useState } = React
 
-        const { useState } = React
-
-        function clone(o) {
-            return JSON.parse(JSON.stringify(o))
-        }
-
-        function emptyRole() {
-            return {
-                valid: false,
-                group: { id: "", name: "" },
-                roletype: { id: "", name: "" }
-            }
-        }
-
-        function RoleEditor({ role, index, onChange, onDelete }) {
-
-            function update(path, value) {
-
-                const r = clone(role)
-                let obj = r
-
-                for (let i = 0; i < path.length - 1; i++) {
-                    obj = obj[path[i]]
-                }
-
-                obj[path[path.length - 1]] = value
-                onChange(index, r)
+        function RoleList({ roles }) {
+            if (!roles || roles.length === 0) {
+                return <div className="text-muted">Uživatel nemá žádné role.</div>
             }
 
             return (
-                <div className="card mb-3 shadow-sm">
+                <div className="list-group">
+                    {roles.map((role, index) => (
+                        <div key={index} className="list-group-item">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <strong>{role.roletype?.name || "bez názvu role"}</strong>
+                                <span className={`badge ${role.valid ? "bg-success" : "bg-secondary"} role-badge`}>
+                                    {role.valid ? "validní" : "nevalidní"}
+                                </span>
+                            </div>
 
-                    <div className="card-header d-flex justify-content-between">
-
-                        <strong>Role {index + 1}</strong>
-
-                        <button className="btn btn-sm btn-outline-danger"
-                            onClick={() => onDelete(index)}>
-                            remove
-                        </button>
-
-                    </div>
-
-                    <div className="card-body">
-
-                        <div className="form-check mb-3">
-
-                            <input className="form-check-input"
-                                type="checkbox"
-                                checked={role.valid}
-                                onChange={e => update(["valid"], e.target.checked)}
-                            />
-
-                            <label className="form-check-label">
-                                valid
-                            </label>
-
+                            <div><strong>Skupina:</strong> {role.group?.name || "-"}</div>
+                            <div className="text-muted small"><strong>group.id:</strong> {role.group?.id || "-"}</div>
+                            <div className="text-muted small"><strong>roletype.id:</strong> {role.roletype?.id || "-"}</div>
                         </div>
-
-
-                        <div className="row">
-
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">group id</label>
-                                <input className="form-control"
-                                    value={role.group.id}
-                                    onChange={e => update(["group", "id"], e.target.value)}
-                                />
-                            </div>
-
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">group name</label>
-                                <input className="form-control"
-                                    value={role.group.name}
-                                    onChange={e => update(["group", "name"], e.target.value)}
-                                />
-                            </div>
-
-                        </div>
-
-
-                        <div className="row">
-
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">roletype id</label>
-                                <input className="form-control"
-                                    value={role.roletype.id}
-                                    onChange={e => update(["roletype", "id"], e.target.value)}
-                                />
-                            </div>
-
-                            <div className="col-md-6 mb-3">
-                                <label className="form-label">roletype name</label>
-                                <input className="form-control"
-                                    value={role.roletype.name}
-                                    onChange={e => update(["roletype", "name"], e.target.value)}
-                                />
-                            </div>
-
-                        </div>
-
-                    </div>
+                    ))}
                 </div>
             )
         }
 
-
-
-        function JsonPaste({ onApply }) {
-
-            const [text, setText] = useState("")
-            const [error, setError] = useState("")
-
-            function apply() {
-
-                try {
-
-                    const data = JSON.parse(text)
-                    onApply(data)
-                    setError("")
-
-                } catch (e) {
-                    setError(e.message)
-                }
-            }
-
-            function paste(e) {
-
-                const txt = e.clipboardData.getData("text")
-
-                try {
-
-                    const data = JSON.parse(txt)
-
-                    e.preventDefault()
-
-                    setText(JSON.stringify(data, null, 2))
-                    onApply(data)
-
-                    setError("")
-
-                } catch (err) {
-                }
-
-            }
-
+        function UserCard({ user, isCurrent, onSelect }) {
             return (
-                <div className="card mb-4">
-
-                    <div className="card-header">
-                        Paste JSON
-                    </div>
-
+                <div className={`card mb-3 user-card ${isCurrent ? "active" : ""}`}>
                     <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <h5 className="card-title mb-1">{user.fullname}</h5>
+                                <div className="text-muted">{user.email}</div>
+                                <div className="small text-muted mt-2">id: {user.id}</div>
+                                <div className="mt-2">
+                                    <span className="badge bg-light text-dark">
+                                        role count: {user.roles?.length || 0}
+                                    </span>
+                                    {isCurrent && (
+                                        <span className="badge bg-primary ms-2">current_user</span>
+                                    )}
+                                </div>
+                            </div>
 
-                        <textarea className="form-control jsonpaste"
-                            value={text}
-                            onChange={e => setText(e.target.value)}
-                            onPaste={paste}
-                            placeholder="paste whole user JSON here"
-                        />
-
-                        {error && <div className="alert alert-danger mt-3">{error}</div>}
-
+                            <button
+                                className={`btn ${isCurrent ? "btn-outline-secondary" : "btn-primary"}`}
+                                onClick={() => onSelect(user)}
+                                disabled={isCurrent}
+                            >
+                                {isCurrent ? "Vybráno" : "Nastavit jako current_user"}
+                            </button>
+                        </div>
                     </div>
-
-                    <div className="card-footer">
-
-                        <button className="btn btn-outline-primary"
-                            onClick={apply}>
-                            apply json
-                        </button>
-
-                    </div>
-
                 </div>
             )
         }
-
-
 
         function App() {
+            const [users, setUsers] = useState([])
+            const [currentUser, setCurrentUser] = useState(null)
+            const [selectedUser, setSelectedUser] = useState(null)
+            const [loading, setLoading] = useState(true)
+            const [saving, setSaving] = useState(false)
+            const [error, setError] = useState("")
 
-            const [user, setUser] = useState(window.__INITIAL_USER__)
+            async function loadData() {
+                try {
+                    setLoading(true)
+                    setError("")
 
-            function setField(field, value) {
-                setUser({ ...user, [field]: value })
-            }
+                    const [usersResponse, currentResponse] = await Promise.all([
+                        fetch("/user", { method: "POST" }),
+                        fetch("/user/7d4e5e38-cebb-4d93-b3f8-67e37472965f", { method: "POST" })
+                    ])
 
-            function setRole(i, role) {
+                    if (!usersResponse.ok) {
+                        throw new Error("Nepodařilo se načíst seznam uživatelů.")
+                    }
+                    if (!currentResponse.ok) {
+                        throw new Error("Nepodařilo se načíst current_user.")
+                    }
 
-                const roles = [...user.roles]
-                roles[i] = role
+                    const usersData = await usersResponse.json()
+                    const currentData = await currentResponse.json()
 
-                setUser({ ...user, roles })
-            }
+                    setUsers(usersData)
+                    setCurrentUser(currentData)
 
-            function removeRole(i) {
-
-                const roles = [...user.roles]
-                roles.splice(i, 1)
-
-                setUser({ ...user, roles })
-            }
-
-            function addRole() {
-
-                const roles = [...user.roles, emptyRole()]
-                setUser({ ...user, roles })
-            }
-
-            function applyJson(data) {
-
-                const normalized = {
-                    id: String(data.id || ""),
-                    fullname: String(data.fullname || ""),
-                    email: String(data.email || ""),
-                    roles: Array.isArray(data.roles) ? data.roles.map(r => ({
-                        valid: !!r.valid,
-                        group: {
-                            id: String(r.group?.id || ""),
-                            name: String(r.group?.name || "")
-                        },
-                        roletype: {
-                            id: String(r.roletype?.id || ""),
-                            name: String(r.roletype?.name || "")
-                        }
-                    })) : []
+                    const selected = usersData.find(u => u.id === currentData.id) || currentData
+                    setSelectedUser(selected)
+                } catch (e) {
+                    setError(e.message || "Došlo k chybě při načítání dat.")
+                } finally {
+                    setLoading(false)
                 }
-
-                setUser(normalized)
             }
 
-            async function save() {
+            useEffect(() => {
+                loadData()
+            }, [])
 
-                await fetch("/user", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(user)
-                })
+            async function selectUser(user) {
+                try {
+                    setSaving(true)
+                    setError("")
 
-                alert("saved")
+                    const response = await fetch(`/user/${user.id}`, {
+                        method: "POST"
+                    })
+
+                    if (!response.ok) {
+                        throw new Error("Nepodařilo se nastavit current_user.")
+                    }
+
+                    const data = await response.json()
+                    setCurrentUser(data)
+                    setSelectedUser(data)
+                } catch (e) {
+                    setError(e.message || "Došlo k chybě při ukládání.")
+                } finally {
+                    setSaving(false)
+                }
+            }
+
+            if (loading) {
+                return <div className="alert alert-info">Načítám uživatele…</div>
             }
 
             return (
-
-                <div>
-
-                    <JsonPaste onApply={applyJson} />
-
-
-                    <div className="card mb-4">
-
-                        <div className="card-header">
-                            User
-                        </div>
-
-                        <div className="card-body">
-
-                            <div className="row">
-
-                                <div className="col-md-4 mb-3">
-                                    <label className="form-label">id</label>
-                                    <input className="form-control"
-                                        value={user.id}
-                                        onChange={e => setField("id", e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="col-md-4 mb-3">
-                                    <label className="form-label">fullname</label>
-                                    <input className="form-control"
-                                        value={user.fullname}
-                                        onChange={e => setField("fullname", e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="col-md-4 mb-3">
-                                    <label className="form-label">email</label>
-                                    <input className="form-control"
-                                        value={user.email}
-                                        onChange={e => setField("email", e.target.value)}
-                                    />
-                                </div>
-
+                <div className="row">
+                    <div className="col-lg-7">
+                        <div className="card mb-4">
+                            <div className="card-header">
+                                Dostupní uživatelé
                             </div>
+                            <div className="card-body">
+                                {error && <div className="alert alert-danger">{error}</div>}
+                                {saving && <div className="alert alert-warning">Ukládám změnu…</div>}
 
+                                {users.length === 0 ? (
+                                    <div className="text-muted">Žádní uživatelé nejsou k dispozici.</div>
+                                ) : (
+                                    users.map(user => (
+                                        <UserCard
+                                            key={user.id}
+                                            user={user}
+                                            isCurrent={currentUser?.id === user.id}
+                                            onSelect={selectUser}
+                                        />
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
 
-
-
-                    <div className="mb-3 d-flex justify-content-between">
-
-                        <h4>roles</h4>
-
-                        <button className="btn btn-sm btn-success"
-                            onClick={addRole}>
-                            add role
-                        </button>
-
-                    </div>
-
-
-                    {user.roles.map((r, i) =>
-
-                        <RoleEditor
-                            key={i}
-                            role={r}
-                            index={i}
-                            onChange={setRole}
-                            onDelete={removeRole}
-                        />
-
-                    )}
-
-
-                    <div className="card mt-4">
-
-                        <div className="card-header">
-                            JSON preview
+                    <div className="col-lg-5">
+                        <div className="card mb-4">
+                            <div className="card-header">
+                                Vybraný uživatel
+                            </div>
+                            <div className="card-body">
+                                {!selectedUser ? (
+                                    <div className="text-muted">Není vybrán žádný uživatel.</div>
+                                ) : (
+                                    <>
+                                        <h5 className="mb-1">{selectedUser.fullname}</h5>
+                                        <div className="text-muted">{selectedUser.email}</div>
+                                        <div className="small text-muted mt-2">id: {selectedUser.id}</div>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="card-body">
-
-                            <pre className="preview bg-dark text-light p-3">
-                                {JSON.stringify(user, null, 2)}
-                            </pre>
-
+                        <div className="card">
+                            <div className="card-header">
+                                Role vybraného uživatele
+                            </div>
+                            <div className="card-body">
+                                {!selectedUser ? (
+                                    <div className="text-muted">Nejsou k dispozici žádná data.</div>
+                                ) : (
+                                    <RoleList roles={selectedUser.roles || []} />
+                                )}
+                            </div>
                         </div>
-
                     </div>
-
-
-                    <div className="mt-4">
-
-                        <button className="btn btn-primary btn-lg"
-                            onClick={save}>
-                            save
-                        </button>
-
-                    </div>
-
                 </div>
-
             )
-
         }
-
-
 
         const root = ReactDOM.createRoot(document.getElementById("root"))
         root.render(<App />)
-
     </script>
 
 </body>
-
 </html>

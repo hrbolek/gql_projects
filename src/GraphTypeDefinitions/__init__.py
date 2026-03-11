@@ -3,7 +3,7 @@ from typing import Union
 
 import strawberry
 
-from .BaseGQLModel import Relation
+from .BaseGQLModel import Relation, IDType
 from .UserGQLModel import UserGQLModel
 
 from .FinanceGQLModel import (

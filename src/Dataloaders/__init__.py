@@ -172,6 +172,7 @@ class LoaderMap(LoaderMapBase[BaseDBModel]):
         # print(f"LoaderMap created with session: {session}")
 
 def createLoadersContext(session):
+    print(f"Creating loaders context with session: {session}")
     return {
         "loaders": LoaderMap(session)
     }

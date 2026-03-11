@@ -85,7 +85,8 @@
             "id": "5f542217-59b6-4a73-afa5-8df74b7a1399",
             "name": "hlavní budget",
             "description": "",
-            "finance_type_id": "9e37059c-de2c-4112-9009-559c8b0396f1"
+            "finance_type_id": "9e37059c-de2c-4112-9009-559c8b0396f1",
+            "value": 200000
         },
         {
             "_chunk": 1,
@@ -93,7 +94,8 @@
             "name": "dílčí budget",
             "masterfinance_id": "5f542217-59b6-4a73-afa5-8df74b7a1399",
             "description": "",
-            "finance_type_id": "9e37059c-de2c-4112-9009-559c8b0396f1"
+            "finance_type_id": "9e37059c-de2c-4112-9009-559c8b0396f1",
+            "value": 200000
         }
     ],
     "finance_types": [

@@ -38,7 +38,7 @@ from src.DBDefinitions.FinanceTransferDBModel import FinanceTransferDBModel
 
 from .BaseGQLModel import BaseGQLModel, IDType, Relation
 
-FinanceGQLModel = ["FinanceGQLModel", strawberry.lazy(".FinanceGQLModel")]
+FinanceGQLModel = typing.Annotated["FinanceGQLModel", strawberry.lazy(".FinanceGQLModel")]
 
 @createInputs2
 class FinanceTransferInputFilter:
@@ -86,20 +86,28 @@ class FinanceTransferGQLModel(BaseGQLModel):
         ]
     )
 
-    finance_source = strawberry.field(
+    startdate: typing.Optional[datetime.date] = strawberry.field(
+        description="""Finance transfer start date""",
+        default=None,
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+
+    finance_source: typing.Optional[FinanceGQLModel] = strawberry.field(
         description="""Finance source""",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=ScalarResolver["FinanceGQLModel"](fkey_field_name="masterfinance_id")
+        resolver=ScalarResolver["FinanceGQLModel"](fkey_field_name="finance_source_id")
     )
 
-    finance_destination = strawberry.field(
+    finance_destination : typing.Optional[FinanceGQLModel]= strawberry.field(
         description="""Finance destination""",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=ScalarResolver["FinanceGQLModel"](fkey_field_name="masterfinance_id")
+        resolver=ScalarResolver["FinanceGQLModel"](fkey_field_name="finance_destination_id")
     )
 
 
@@ -123,7 +131,7 @@ from uoishelpers.resolvers import TreeInputStructureMixin, InputModelMixin
 @strawberry.input(
     description="""Input type for creating a FinanceTransfer"""
 )
-class FinanceTransferInsertGQLModel(TreeInputStructureMixin):
+class FinanceTransferInsertGQLModel:
     getLoader = FinanceTransferGQLModel.getLoader
     finance_source_id: IDType = strawberry.field(
         description="""Finance source id""",
@@ -220,14 +228,16 @@ class FinanceTransferMutation:
         source_finance = db_row
         if source_finance.value is None:
             return InsertError[FinanceTransferGQLModel](
-                entity=finance_transfer,
-                message="Source finance has no value",
+                _input=finance_transfer,
+                _entity=finance_transfer,
+                msg="Source finance has no value",
                 code="16f66af3-052e-4ac8-8b07-035a2a5d9114"
             )
         if source_finance.value < finance_transfer.amount:
             return InsertError[FinanceTransferGQLModel](
-                entity=finance_transfer,
-                message="Source finance has insufficient value",
+                _input=finance_transfer,
+                _entity=finance_transfer,
+                msg="Source finance has insufficient value",
                 code="46084b9a-324d-4751-b2fd-a5f4a8740a99"
             )
         source_finance.value -= finance_transfer.amount
@@ -254,10 +264,13 @@ class FinanceTransferMutation:
             LoadDataExtension[UpdateError, FinanceTransferGQLModel]()
         ],
     )
-    async def financetransfer_update(
+    async def finance_transfer_update(
         self,
         info: strawberry.Info,
-        finance_transfer: FinanceTransferUpdateGQLModel
+        finance_transfer: FinanceTransferUpdateGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTransferGQLModel, UpdateError[FinanceTransferGQLModel]]:
         return await Update[FinanceTransferGQLModel].DoItSafeWay(info=info, entity=finance_transfer)
     
@@ -281,10 +294,13 @@ class FinanceTransferMutation:
             LoadDataExtension[DeleteError, FinanceTransferGQLModel]()
         ],
     )   
-    async def financetransfer_delete(
+    async def finance_transfer_delete(
         self,
         info: strawberry.Info,
-        finance_transfer: FinanceTransferDeleteGQLModel
+        finance_transfer: FinanceTransferDeleteGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[FinanceTransferGQLModel]]:
         # TODO navysit value u finance_source_id o amount, ktery posilame ve financetransferu a zmensit value u finance_destination_id o amount, ktery posilame ve financetransferu
         return await Delete[FinanceTransferGQLModel].DoItSafeWay(info=info, entity=finance_transfer)
