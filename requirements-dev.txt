@@ -5,7 +5,7 @@ gunicorn
 
 asyncpg
 
-sqlalchemy
+sqlalchemy[asyncio]
 sqlalchemy_utils
 uuid6
 

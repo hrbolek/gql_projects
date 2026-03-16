@@ -4,35 +4,28 @@ from typing import Union
 import strawberry
 
 from .BaseGQLModel import Relation, IDType
-from .UserGQLModel import UserGQLModel
+from src.GraphTypeDefinitions.Domain_UG.UserGQLModel import UserGQLModel
+from src.GraphTypeDefinitions.Domain_UG.GroupGQLModel import GroupGQLModel
 
-from .FinanceGQLModel import (
-    FinanceGQLModel
-)
-from .ProjectGQLModel import (
-    ProjectGQLModel
-)
-from .ProjectDependencyGQLModel import (
-    ProjectDependencyGQLModel
-)
-from .ProjectTypeGQLModel import (
-    ProjectTypeGQLModel
-)
-from .FinanceTypeGQLModel import (  
-    FinanceTypeGQLModel
-)
-from .FinanceTransferGQLModel import (
-    FinanceTransferGQLModel
-)
+from .Domain_Projects import Query_Domain_Projects, Mutation_Domain_Projects
 
+@strawberry.type(description="""Type for query root""")
+class Query(
+    Query_Domain_Projects
+):
+    pass
 
-from .query import Query
-from .mutation import Mutation
+@strawberry.type(description="""Type for query root""")
+class Mutation(
+    Mutation_Domain_Projects
+):
+    pass
+
 
 schema = strawberry.federation.Schema(
     query=Query,
     mutation=Mutation,
-    types=(UserGQLModel, ),
+    types=(UserGQLModel, GroupGQLModel, ),
     extensions=[],
     schema_directives=[Relation]    
 )

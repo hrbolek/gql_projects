@@ -36,9 +36,9 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 
 from src.DBDefinitions.ProjectDependencyDBModel import ProjectDependencyDBModel
 
-from .BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..BaseGQLModel import BaseGQLModel, IDType, Relation
 
-ProjectGQLModel = ["ProjectGQLModel", strawberry.lazy(".ProjectGQLModel")]
+ProjectGQLModel = typing.Annotated["ProjectGQLModel", strawberry.lazy(".ProjectGQLModel")]
 
 @createInputs2
 class ProjectDependencyInputFilter:
@@ -56,34 +56,34 @@ class ProjectDependencyGQLModel(BaseGQLModel):
 
 
     previous_id: typing.Optional[IDType] = strawberry.field(
-        description="""Finance source id""",    
+        description="""Project source id""",    
         default=None,
         permission_classes=[
             OnlyForAuthentized
         ]
     )
     next_id: typing.Optional[IDType] = strawberry.field(
-        description="""Finance destination id""",    
+        description="""Project next id""",    
         default=None,
         permission_classes=[
             OnlyForAuthentized
         ]
     )
 
-    previous = strawberry.field(
-        description="""Finance source""",
+    previous: typing.Optional[ProjectGQLModel] = strawberry.field(
+        description="""Project source""",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=ScalarResolver["ProjectGQLModel"](fkey_field_name="masterfinance_id")
+        resolver=ScalarResolver["ProjectGQLModel"](fkey_field_name="previous_id")
     )
 
-    next = strawberry.field(
-        description="""Finance destination""",
+    next: typing.Optional[ProjectGQLModel] = strawberry.field(
+        description="""Project destination""",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=ScalarResolver["ProjectGQLModel"](fkey_field_name="masterfinance_id")
+        resolver=ScalarResolver["ProjectGQLModel"](fkey_field_name="next_id")
     )
 
 
@@ -107,7 +107,7 @@ from uoishelpers.resolvers import TreeInputStructureMixin, InputModelMixin
 @strawberry.input(
     description="""Input type for creating a ProjectDependency"""
 )
-class ProjectDependencyInsertGQLModel(TreeInputStructureMixin):
+class ProjectDependencyInsertGQLModel(InputModelMixin):
     getLoader = ProjectDependencyGQLModel.getLoader
     previous_id: IDType = strawberry.field(
         description="""Finance source id""",
@@ -187,10 +187,10 @@ class ProjectDependencyMutation:
         project_dependency.rbacobject_id = rbacobject_id
         next_project = await ProjectGQLModel.getLoader(info).load(project_dependency.next_id)
         source_project = db_row
-        if source_project.masterproject_id != next_project.id:
+        if source_project.masterproject_id != next_project.masterproject_id:
             return InsertError[ProjectDependencyGQLModel](
-                entity=project_dependency,
-                message="Source project does not match the expected project",
+                _input=project_dependency,
+                msg=f"Source project {source_project.masterproject_id} does not match the next project {next_project.masterproject_id}",
                 code="16f66af3-052e-4ac8-8b07-035a2a5d9114"
             )
         return await Insert[ProjectDependencyGQLModel].DoItSafeWay(info=info, entity=project_dependency)
@@ -213,10 +213,13 @@ class ProjectDependencyMutation:
             LoadDataExtension[UpdateError, ProjectDependencyGQLModel]()
         ],
     )
-    async def projectdependency_update(
+    async def project_dependency_update(
         self,
         info: strawberry.Info,
-        project_dependency: ProjectDependencyUpdateGQLModel
+        project_dependency: ProjectDependencyUpdateGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
     ) -> typing.Union[ProjectDependencyGQLModel, UpdateError[ProjectDependencyGQLModel]]:
         return await Update[ProjectDependencyGQLModel].DoItSafeWay(info=info, entity=project_dependency)
     
@@ -237,10 +240,13 @@ class ProjectDependencyMutation:
             LoadDataExtension[DeleteError, ProjectDependencyGQLModel]()
         ],
     )   
-    async def projectdependency_delete(
+    async def project_dependency_delete(
         self,
         info: strawberry.Info,
-        project_dependency: ProjectDependencyDeleteGQLModel
+        project_dependency: ProjectDependencyDeleteGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
+        user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[ProjectDependencyGQLModel]]:
         return await Delete[ProjectDependencyGQLModel].DoItSafeWay(info=info, entity=project_dependency)
     

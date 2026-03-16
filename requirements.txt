@@ -6,7 +6,7 @@ gunicorn
 asyncpg
 sqlalchemy-cockroachdb
 
-sqlalchemy
+sqlalchemy[asyncio]
 sqlalchemy_utils
 uuid6
 

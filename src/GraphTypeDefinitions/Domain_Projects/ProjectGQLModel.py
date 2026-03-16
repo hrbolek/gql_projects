@@ -36,7 +36,11 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 
 from src.DBDefinitions.ProjectDBModel import ProjectDBModel
 
-from .BaseGQLModel import BaseGQLModel, IDType, Relation
+from src.GraphTypeDefinitions.BaseGQLModel import BaseGQLModel, IDType, Relation
+
+
+ProjectTypeGQLModel = typing.Annotated["ProjectTypeGQLModel", strawberry.lazy(".ProjectTypeGQLModel")]
+FinanceGQLModel = typing.Annotated["FinanceGQLModel", strawberry.lazy(".FinanceGQLModel")]
 
 @createInputs2
 class ProjectInputFilter:
@@ -142,6 +146,30 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
         resolver=VectorResolver["ProjectGQLModel"](fkey_field_name="masterproject_id", whereType=ProjectInputFilter)
     )
 
+    finance_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="""Finance id""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+
+    finance: typing.Optional["FinanceGQLModel"] = strawberry.field(
+        description="""Project which owns this particular project""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=ScalarResolver["FinanceGQLModel"](fkey_field_name="finance_id")
+    )
+
+    type_: typing.Optional["ProjectTypeGQLModel"] = strawberry.field(
+        name="type",
+        description="""Project type""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=ScalarResolver["ProjectTypeGQLModel"](fkey_field_name="project_type_id")
+    )
 
 
 @strawberry.interface(

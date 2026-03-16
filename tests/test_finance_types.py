@@ -1,306 +1,124 @@
 import pytest
 import logging
 
-async def financetype_insert(SchemaExecutor, financetype):
-    query = """mutation financeTypeInsert(
-	$mastertypeId: UUID! # null, 
-	$name: String # null, 
-	$nameEn: String # null, 
-	$id: UUID # null, 
-	$subtypes: [FinanceTypeInsertGQLModel!] # null
-) {
-  financeTypeInsert(
-	event: {
-	mastertypeId: $mastertypeId, 
-	name: $name, 
-	nameEn: $nameEn, 
-	id: $id, 
-	subtypes: $subtypes}
-  ) {
-    ... on FinanceTypeGQLModel { ...FinanceType }
-    ... on FinanceTypeGQLModelInsertError { ...FinanceTypeGQLModelInsertError }
-  }
-}
 
-fragment User on UserGQLModel {
-    __typename
-    id
-    }
+from .asserts import assert_insert, assert_update, assert_delete, assert_same, assert_read
 
-fragment RBACObject on RBACObjectGQLModel {
-    __typename
-    id
-    }
-
-fragment FinanceType on FinanceTypeGQLModel {
-  __typename
-  id
-  lastchange
-  created
-  createdbyId
-  changedbyId
-  rbacobjectId
-  createdby {
-  ...User
-}
-  changedby {
-  ...User
-}
-  rbacobject {
-  ...RBACObject
-}
-  path
-  name
-  nameEn
-  mastertypeId
-  mastertype { __typename }
-  subtypes { __typename }
-  }
-
-fragment FinanceTypeGQLModelInsertError on FinanceTypeGQLModelInsertError {
-  __typename
-  Entity {
-  ...FinanceType
-}
-  msg
-  failed
-  code
-  location
-  input
-  }
-
-"""
-    variable_values = {**financetype}
-    result = await SchemaExecutor(query=query, variable_values=variable_values)
+async def finance_type_insert(SchemaExecutor, CreateMutation, variables):
+    query = CreateMutation("financeTypeInsert")
+    result = await SchemaExecutor(query=query, variable_values=variables)
     return result
 
-async def financetype_update(SchemaExecutor, financetype):
-    query = """mutation financeTypeUpdate(
-	$id: UUID! # null, 
-	$lastchange: DateTime! # null, 
-	$name: String # null, 
-	$nameEn: String # null
-) {
-  financeTypeUpdate(
-	event: {
-	id: $id, 
-	lastchange: $lastchange, 
-	name: $name, 
-	nameEn: $nameEn}
-  ) {
-    ... on FinanceTypeGQLModel { ...FinanceType }
-    ... on FinanceTypeGQLModelUpdateError { ...Error }
-  }
-}
-
-fragment User on UserGQLModel {
-    __typename
-    id
-    }
-
-fragment RBACObject on RBACObjectGQLModel {
-    __typename
-    id
-    }
-
-fragment FinanceType on FinanceTypeGQLModel {
-  __typename
-  id
-  lastchange
-  created
-  createdbyId
-  changedbyId
-  rbacobjectId
-  createdby {
-  ...User
-}
-  changedby {
-  ...User
-}
-  rbacobject {
-  ...RBACObject
-}
-  path
-  name
-  nameEn
-  mastertypeId
-  mastertype { __typename }
-  subtypes { __typename }
-  }
-
-fragment Error on FinanceTypeGQLModelUpdateError {
-  __typename
-  Entity {
-  ...FinanceType
-}
-  msg
-  failed
-  code
-  location
-  input
-  }
-
-"""
-    variable_values = {**financetype}
-    result = await SchemaExecutor(query=query, variable_values=variable_values)
+async def finance_type_update(SchemaExecutor, CreateMutation, variables):
+    query = CreateMutation("financeTypeUpdate")
+    result = await SchemaExecutor(query=query, variable_values=variables)
     return result
 
-async def financetype_delete(SchemaExecutor, financetype):
-    query = """mutation financeTypeDelete(
-	$id: UUID! # null, 
-	$lastchange: DateTime! # null
-) {
-  financeTypeDelete(
-	event: {
-	id: $id, 
-	lastchange: $lastchange}
-  ) {
-  ...FinanceTypeGQLModelDeleteError
-}
-}
-
-fragment User on UserGQLModel {
-    __typename
-    id
-    }
-
-fragment RBACObject on RBACObjectGQLModel {
-    __typename
-    id
-    }
-
-fragment FinanceType on FinanceTypeGQLModel {
-  __typename
-  id
-  lastchange
-  created
-  createdbyId
-  changedbyId
-  rbacobjectId
-  createdby {
-  ...User
-}
-  changedby {
-  ...User
-}
-  rbacobject {
-  ...RBACObject
-}
-  path
-  name
-  nameEn
-  mastertypeId
-  mastertype { __typename }
-  subtypes { __typename }
-  }
-
-fragment FinanceTypeGQLModelDeleteError on FinanceTypeGQLModelDeleteError {
-__typename
-Entity {
-  ...FinanceType
-}
-msg
-code
-failed
-location
-input
-}
-
-"""
-    variable_values = {
-        **financetype
-    }
-    result = await SchemaExecutor(query=query, variable_values=variable_values)
+async def finance_type_delete(SchemaExecutor, CreateMutation, variables):
+    query = CreateMutation("financeTypeDelete")
+    result = await SchemaExecutor(query=query, variable_values=variables)
     return result
 
-@pytest.mark.asyncio
-async def test_financetype_insert_success(SchemaExecutor, FullContext):
-    userRolesForRBACQuery_patch = FullContext["userRolesForRBACQuery_patch"]
-    userRolesForRBACQuery_patch([
+async def finance_type_read(SchemaExecutor, CreateQuery, variables):
+    query = CreateQuery("financeTypeById")
+    result = await SchemaExecutor(query=query, variable_values=variables)
+    return result
+
+
+default_user = {
+    "id": "30bc16ac-946a-4d73-a1ad-3fd3ddd038f7",
+    "roles": [
+        {"roletype": {"name": "administrátor"}, "valid": True},
         {"roletype": {"name": "superadmin"}, "valid": True},
-    ])
-
-    financetype = {
-        "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
-        "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
-        "name": "financetype type X"
+    ]
+}
+default_roles = {
+    "result": [
+        {
+            "roletype": {
+                "id": "b87aed46-dfc3-40f8-ad49-03f4138c7478",
+                "name": "procesní administrátor"
+            },
+            "roletype": {
+                "id": "5f9c9b11-496a-4047-ba61-d45e9f1cb6e5",
+                "name": "administrátor"
+            }
         }
-    result = await financetype_insert(SchemaExecutor, financetype)
-    assert result.get("errors", None) is None, f"Unexpected errors: {result.get('errors', None)}"
-    data = result.get("data", None)
-    assert data is not None, f"Missing data: {result}"
-    financetypeInsert = data.get("financeTypeInsert", None)
-    assert financetypeInsert is not None, f"Missing financetypeInsert: {data}"
-    __typename = financetypeInsert.get("__typename", None)
-    assert __typename is not None, f"Missing __typename field in query"
-    if "Error" in __typename:
-        logging.info(f"op result:\n{financetypeInsert}")    
-    assert financetypeInsert.get("lastchange", None) is not None, f"Missing lastchange field in query"
-    assert "Error" not in __typename, f"Got Error"
-    assert financetypeInsert.get("id", None) == financetype["id"], f"ID mismatch: expected {financetype['id']}, got {financetypeInsert.get('id', None)}"
-    assert financetypeInsert.get("name", None) == financetype["name"], f"Name mismatch: expected {financetype['name']}, got {financetypeInsert.get('name', None)}"
-
-    return financetypeInsert
+    ]
+}
 
 @pytest.mark.asyncio
-async def test_financetype_update_success(SchemaExecutor, FullContext):
-    userRolesForRBACQuery_patch = FullContext["userRolesForRBACQuery_patch"]
-    userRolesForRBACQuery_patch([
-        {"roletype": {"name": "superadmin"}, "valid": True},
-    ])
+async def test_finance_type_insert_success(
+    SchemaExecutor, 
+    CreateMutation, 
+    WhoAmIExtensionOverride, 
+    RolePermissionSchemaExtensionOverride
+):
+    WhoAmIExtensionOverride.set_user(default_user)
+    RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
-    financetype = {
+    finance_type = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
         "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
-        "name": "financetype type X"
+        "name": "finance_type type X"
+        }
+    result = await finance_type_insert(SchemaExecutor, CreateMutation, finance_type)
+    finance_type_inserted = assert_insert(result)
+
+    result = await finance_type_delete(SchemaExecutor, CreateMutation, finance_type_inserted)    
+    finance_type_deleted = assert_delete(result)
+
+@pytest.mark.asyncio
+async def test_finance_type_update_success(
+    SchemaExecutor, 
+    CreateMutation, 
+    WhoAmIExtensionOverride, 
+    RolePermissionSchemaExtensionOverride
+):
+    WhoAmIExtensionOverride.set_user(default_user)
+    RolePermissionSchemaExtensionOverride.set_response(default_roles)
+
+    finance_type = {
+        "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
+        "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
+        "name": "finance_type type X"
         }
     delta = {
-        **financetype,
-        "name": "financetype type Y"
+        "name": "finance_type type Y"
     }
-    inserted = await financetype_insert(SchemaExecutor, financetype)
-    data = inserted.get("data", None)
-    financetypeInsert = data.get("financeTypeInsert", None)
+    result = await finance_type_insert(SchemaExecutor, CreateMutation, finance_type)
+    finance_type_inserted = assert_insert(result)
+
     payload = {
-        **financetypeInsert,
+        **finance_type_inserted,
         **delta
     }
-    result = await financetype_update(SchemaExecutor, payload)
-    assert result.get("errors", None) is None
-    data = result.get("data", None)
-    assert data is not None
-    financetypeUpdate = data.get("financeTypeUpdate", None)
-    assert financetypeUpdate is not None
-    logging.info(f"financetypeUpdate:\n{financetypeUpdate}")
-    assert financetypeUpdate.get("id", None) is not None
-    assert financetypeUpdate.get("name", None) == delta["name"]
+    result = await finance_type_update(SchemaExecutor, CreateMutation, payload)
+    finance_type_updated = assert_update(result)
+    assert_same(delta, finance_type_updated)
 
-    return financetypeUpdate
+    result = await finance_type_delete(SchemaExecutor, CreateMutation, finance_type_updated)
+    finance_type_deleted = assert_delete(result)
+
+
 
 @pytest.mark.asyncio
-async def test_financetype_delete(SchemaExecutor, FullContext):
-    userRolesForRBACQuery_patch = FullContext["userRolesForRBACQuery_patch"]
-    userRolesForRBACQuery_patch([
-        {"roletype": {"name": "superadmin"}, "valid": True},
-    ])
+async def test_finance_type_delete(
+    SchemaExecutor, 
+    CreateMutation, 
+    WhoAmIExtensionOverride, 
+    RolePermissionSchemaExtensionOverride
+):
+    WhoAmIExtensionOverride.set_user(default_user)
+    RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
-    financetype = {
+    finance_type = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
         "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
-        "name": "financetype type X"
+        "name": "finance_type type X"
         }
-    inserted = await financetype_insert(SchemaExecutor, financetype)
-    data = inserted.get("data", None)
-    financetypeInsert = data.get("financeTypeInsert", None)
-    payload = {
-        **financetype,
-        **financetypeInsert
-    }
-    result = await financetype_delete(SchemaExecutor, payload)
-    assert result.get("errors", None) is None
-    data = result.get("data", None)
-    assert data is not None
-    financetypeDelete = data.get("financeTypeDelete", None)
-    assert financetypeDelete is None
+    result = await finance_type_insert(SchemaExecutor, CreateMutation, finance_type)
+    finance_type_inserted = assert_insert(result)
 
-    return financetypeDelete
+    result = await finance_type_delete(SchemaExecutor, CreateMutation, finance_type_inserted)    
+    finance_type_deleted = assert_delete(result)

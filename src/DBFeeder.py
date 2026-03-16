@@ -269,40 +269,42 @@ from functools import cache
 import os
 import json
 from uoishelpers.feeders import ImportModels
+from uoishelpers.dataloaders import readJsonFile
 import datetime
 
-def get_demodata(filename="./systemdata.json"):
-    def datetime_parser(json_dict):
-        for (key, value) in json_dict.items():
-            if key in ["startdate", "enddate", "lastchange", "created"]:
-                if value is None:
-                    dateValueWOtzinfo = None
-                else:
-                    try:
-                        dateValue = datetime.datetime.fromisoformat(value)
-                        dateValueWOtzinfo = dateValue.replace(tzinfo=None)
-                    except:
-                        print("jsonconvert Error", key, value, flush=True)
-                        dateValueWOtzinfo = None
+# def get_demodata(filename="./systemdata.json"):
+#     def datetime_parser(json_dict):
+#         for (key, value) in json_dict.items():
+#             if key in ["startdate", "enddate", "lastchange", "created"]:
+#                 if value is None:
+#                     dateValueWOtzinfo = None
+#                 else:
+#                     try:
+#                         dateValue = datetime.datetime.fromisoformat(value)
+#                         dateValueWOtzinfo = dateValue.replace(tzinfo=None)
+#                     except:
+#                         print("jsonconvert Error", key, value, flush=True)
+#                         dateValueWOtzinfo = None
                 
-                json_dict[key] = dateValueWOtzinfo
+#                 json_dict[key] = dateValueWOtzinfo
             
-            if (key in ["id", "changedby", "createdby"]) or ("_id" in key):
+#             if (key in ["id", "changedby", "createdby"]) or ("_id" in key):
                 
-                if key == "outer_id":
-                    json_dict[key] = value
-                elif value not in ["", None]:
-                    json_dict[key] = uuid.UUID(value)
-                else:
-                    print(key, value)
+#                 if key == "outer_id":
+#                     json_dict[key] = value
+#                 elif value not in ["", None]:
+#                     json_dict[key] = uuid.UUID(value)
+#                 else:
+#                     print(key, value)
 
-        return json_dict
+#         return json_dict
 
 
-    with open(filename, "r", encoding="utf-8") as f:
-        jsonData = json.load(f, object_hook=datetime_parser)
+#     with open(filename, "r", encoding="utf-8") as f:
+#         jsonData = json.load(f, object_hook=datetime_parser)
 
-    return jsonData
+#     return jsonData
+get_demodata = lambda :readJsonFile(jsonFileName="./systemdata.json")
 
 async def initDB(asyncSessionMaker, filename="./systemdata.json"):
     isDemo =  os.environ.get("DEMODATA", None) in ["True", "true"]
@@ -321,7 +323,7 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
             FinanceTransferDBModel
         ]
 
-    jsonData = get_demodata(filename=filename)
+    jsonData = readJsonFile(filename)
     await ImportModels(asyncSessionMaker, dbModels, jsonData)
     pass
 

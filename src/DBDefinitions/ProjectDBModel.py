@@ -80,6 +80,20 @@ class ProjectDBModel(BaseDBModel):
         index=True,
     )
 
+    finance_id: Mapped[IDType] = mapped_column(
+        ForeignKey(fk_name("finances", "id")),
+        nullable=True,
+        default=None,
+        index=True,
+    )
+
+    finance = relationship(
+        "FinanceDBModel",
+        viewonly=True, 
+        remote_side="FinanceDBModel.id",
+        uselist=False,
+        # back_populates="subprojects",
+    ) # https://docs.sqlalchemy.org/en/20/orm/self_referential.html
 
     masterproject = relationship(
         "ProjectDBModel",

@@ -36,7 +36,7 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 
 from src.DBDefinitions.FinanceTransferDBModel import FinanceTransferDBModel
 
-from .BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..BaseGQLModel import BaseGQLModel, IDType, Relation
 
 FinanceGQLModel = typing.Annotated["FinanceGQLModel", strawberry.lazy(".FinanceGQLModel")]
 
@@ -148,7 +148,7 @@ class FinanceTransferInsertGQLModel:
     
     amount: typing.Optional[float] = strawberry.field(
         description="""transfer transfer amount""",
-        default=None
+        default=0
     )
     id: typing.Optional[IDType] = strawberry.field(
         description="""transfer id""",
@@ -229,14 +229,12 @@ class FinanceTransferMutation:
         if source_finance.value is None:
             return InsertError[FinanceTransferGQLModel](
                 _input=finance_transfer,
-                _entity=finance_transfer,
                 msg="Source finance has no value",
                 code="16f66af3-052e-4ac8-8b07-035a2a5d9114"
             )
         if source_finance.value < finance_transfer.amount:
             return InsertError[FinanceTransferGQLModel](
                 _input=finance_transfer,
-                _entity=finance_transfer,
                 msg="Source finance has insufficient value",
                 code="46084b9a-324d-4751-b2fd-a5f4a8740a99"
             )

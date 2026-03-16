@@ -36,7 +36,12 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 
 from src.DBDefinitions.FinanceDBModel import FinanceDBModel
 
-from .BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..BaseGQLModel import BaseGQLModel, IDType, Relation
+
+FinanceTypeGQLModel = typing.Annotated["FinanceTypeGQLModel", strawberry.lazy(".FinanceTypeGQLModel")]
+FinanceTransferGQLModel = typing.Annotated["FinanceTransferGQLModel", strawberry.lazy(".FinanceTransferGQLModel")]
+FinanceTransferInputFilter = typing.Annotated["FinanceTransferInputFilter", strawberry.lazy(".FinanceTransferGQLModel")]
+ProjectGQLModel = typing.Annotated["ProjectGQLModel", strawberry.lazy(".ProjectGQLModel")]
 
 @createInputs2
 class FinanceInputFilter:
@@ -126,6 +131,55 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
         resolver=VectorResolver["FinanceGQLModel"](fkey_field_name="masterfinance_id", whereType=FinanceInputFilter)
     )
 
+    type_: typing.Optional["FinanceTypeGQLModel"] = strawberry.field(
+        name="type",
+        description="""Finance type""",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=ScalarResolver["FinanceTypeGQLModel"](fkey_field_name="finance_type_id")
+    )
+
+    transfers: typing.Optional[FinanceTransferGQLModel] = strawberry.field(
+        description="transfers from this finance (account)",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+        resolver=VectorResolver["FinanceTransferGQLModel"](fkey_field_name="finance_source_id", whereType=FinanceTransferInputFilter)
+    )
+
+    async def _project_id(self, info: strawberry.Info):
+        from .ProjectGQLModel import ProjectGQLModel
+        loader = ProjectGQLModel.getLoader(info)
+        projects = await loader.filter_by(finance_id=self.id)
+        projects = list(projects)
+        if len(projects) == 1: return ProjectGQLModel.from_dataclass(projects[0])
+        if len(projects) == 0: return None
+        return projects
+
+    @strawberry.field(
+        description="project id related to this finance",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+    async def project_id(self, info: strawberry.Info) -> typing.Optional[IDType]:
+        result = await self._project_id(info=info)
+        assert not isinstance(result, list), f"There are many projects assigned to this finance, this is not expected"
+        return result.id if result else result
+    
+    @strawberry.field(
+        description="project related to this finance",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+    async def project(self, info: strawberry.Info) -> typing.Optional[ProjectGQLModel]:
+        result = await self._project_id(info=info)
+        assert not isinstance(result, list), f"There are many projects assigned to this finance, this is not expected"
+        return result
+    
+    
 
 
 @strawberry.interface(

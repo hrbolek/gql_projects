@@ -34,24 +34,23 @@ from uoishelpers.gqlpermissions.UserRoleProviderExtension import UserRoleProvide
 from uoishelpers.gqlpermissions.UserAccessControlExtension import UserAccessControlExtension
 from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAbsoluteAccessControlExtension
 
-from src.DBDefinitions import ProjectTypeDBModel
+from src.DBDefinitions import FinanceTypeDBModel
 
-from .BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..BaseGQLModel import BaseGQLModel, IDType, Relation
 
 @createInputs2
-class ProjectTypeInputFilter:
+class FinanceTypeInputFilter:
     name: str
     name_en: str
     id: IDType
-
 
 
 @strawberry.federation.type(
     description="""Entity representing a Event type""",
     keys=["id"]
 )
-class ProjectTypeGQLModel(BaseGQLModel):
-    DBModel = ProjectTypeDBModel
+class FinanceTypeGQLModel(BaseGQLModel):
+    DBModel = FinanceTypeDBModel
 
     path: typing.Optional[str] = strawberry.field(
         description="""Materialized path representing the type's hierarchical location.  """,
@@ -82,21 +81,22 @@ class ProjectTypeGQLModel(BaseGQLModel):
             OnlyForAuthentized
         ]
     )
+    
 
-    mastertype: typing.Optional["ProjectTypeGQLModel"] = strawberry.field(
+    mastertype: typing.Optional["FinanceTypeGQLModel"] = strawberry.field(
         description="""Type which owns this particular type""",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=ScalarResolver["ProjectTypeGQLModel"](fkey_field_name="mastertype_id")
+        resolver=ScalarResolver["FinanceTypeGQLModel"](fkey_field_name="mastertype_id")
     )
 
-    subtypes: typing.List["ProjectTypeGQLModel"] = strawberry.field(
+    subtypes: typing.List["FinanceTypeGQLModel"] = strawberry.field(
         description="""Type children""",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=VectorResolver["ProjectTypeGQLModel"](fkey_field_name="mastertype_id", whereType=ProjectTypeInputFilter)
+        resolver=VectorResolver["FinanceTypeGQLModel"](fkey_field_name="mastertype_id", whereType=FinanceTypeInputFilter)
     )
 
 
@@ -104,25 +104,25 @@ class ProjectTypeGQLModel(BaseGQLModel):
 @strawberry.interface(
     description="""Event queries"""
 )
-class ProjectTypeQuery:
-    project_type_by_id: typing.Optional[ProjectTypeGQLModel] = strawberry.field(
+class FinanceTypeQuery:
+    finance_type_by_id: typing.Optional[FinanceTypeGQLModel] = strawberry.field(
         description="""get a event by its id""",
         permission_classes=[OnlyForAuthentized],
-        resolver=ProjectTypeGQLModel.load_with_loader
+        resolver=FinanceTypeGQLModel.load_with_loader
     )
 
-    project_type_page: typing.List[ProjectTypeGQLModel] = strawberry.field(
+    finance_type_page: typing.List[FinanceTypeGQLModel] = strawberry.field(
         description="""get a page of events""",
         permission_classes=[OnlyForAuthentized],
-        resolver=PageResolver[ProjectTypeGQLModel](whereType=ProjectTypeInputFilter)
+        resolver=PageResolver[FinanceTypeGQLModel](whereType=FinanceTypeInputFilter)
     )
 
 from uoishelpers.resolvers import TreeInputStructureMixin, InputModelMixin
 @strawberry.input(
     description="""Input type for creating a Event"""
 )
-class ProjectTypeInsertGQLModel(TreeInputStructureMixin):
-    getLoader = ProjectTypeGQLModel.getLoader
+class FinanceTypeInsertGQLModel(TreeInputStructureMixin):
+    getLoader = FinanceTypeGQLModel.getLoader
     mastertype_id: IDType = strawberry.field(
         description="""Event parent id""",
         # default=None
@@ -140,7 +140,7 @@ class ProjectTypeInsertGQLModel(TreeInputStructureMixin):
         description="""Event id""",
         default=None
     )
-    subtypes: typing.Optional[typing.List["ProjectTypeInsertGQLModel"]] = strawberry.field(
+    subtypes: typing.Optional[typing.List["FinanceTypeInsertGQLModel"]] = strawberry.field(
         description="sub event types",
         default_factory=list
     )
@@ -153,7 +153,7 @@ class ProjectTypeInsertGQLModel(TreeInputStructureMixin):
 @strawberry.input(
     description="""Input type for updating a Event"""
 )
-class ProjectTypeUpdateGQLModel:
+class FinanceTypeUpdateGQLModel:
     id: IDType = strawberry.field(
         description="""Event id""",
     )
@@ -173,7 +173,7 @@ class ProjectTypeUpdateGQLModel:
 @strawberry.input(
     description="""Input type for deleting a Event"""
 )
-class ProjectTypeDeleteGQLModel:
+class FinanceTypeDeleteGQLModel:
     id: IDType = strawberry.field(
         description="""Event id""",
     )
@@ -184,66 +184,66 @@ class ProjectTypeDeleteGQLModel:
 @strawberry.interface(
     description="""Event mutations"""
 )
-class ProjectTypeMutation:
+class FinanceTypeMutation:
     @strawberry.mutation(
         description="""Insert a event type, it could be connected to master event type""",
         permission_classes=[
             OnlyForAuthentized
-            # SimpleInsertPermission[ProjectTypeGQLModel](roles=["administrátor"])
+            # SimpleInsertPermission[FinanceTypeGQLModel](roles=["administrátor"])
         ],
         extensions=[
-            UserAbsoluteAccessControlExtension[InsertError, ProjectTypeGQLModel](
+            UserAbsoluteAccessControlExtension[InsertError, FinanceTypeGQLModel](
                 roles=["superadmin"]
             )
         ],
     )
-    async def project_type_insert(
+    async def finance_type_insert(
         self,
         info: strawberry.Info,
-        event: ProjectTypeInsertGQLModel,
+        event: FinanceTypeInsertGQLModel,
         user_roles: typing.List[dict],
-    ) -> typing.Union[ProjectTypeGQLModel, InsertError[ProjectTypeGQLModel]]:
-        return await Insert[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=event)
+    ) -> typing.Union[FinanceTypeGQLModel, InsertError[FinanceTypeGQLModel]]:
+        return await Insert[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
     
 
     @strawberry.mutation(
         description="""Update a Event type.""",
         permission_classes=[
             OnlyForAuthentized
-            # SimpleUpdatePermission[ProjectTypeGQLModel](roles=["administrátor"])
+            # SimpleUpdatePermission[FinanceTypeGQLModel](roles=["administrátor"])
         ],
         extensions=[
-            UserAbsoluteAccessControlExtension[InsertError, ProjectTypeGQLModel](
+            UserAbsoluteAccessControlExtension[InsertError, FinanceTypeGQLModel](
                 roles=["superadmin"]
             )
         ],
     )
-    async def project_type_update(
+    async def finance_type_update(
         self,
         info: strawberry.Info,
-        event: ProjectTypeUpdateGQLModel,
+        event: FinanceTypeUpdateGQLModel,
         user_roles: typing.List[dict],
-    ) -> typing.Union[ProjectTypeGQLModel, UpdateError[ProjectTypeGQLModel]]:
-        return await Update[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=event)
+    ) -> typing.Union[FinanceTypeGQLModel, UpdateError[FinanceTypeGQLModel]]:
+        return await Update[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
     
 
     @strawberry.mutation(
         description="""Delete a Event type""",
         permission_classes=[
             OnlyForAuthentized,
-            # SimpleDeletePermission[ProjectTypeGQLModel](roles=["administrátor"])
+            # SimpleDeletePermission[FinanceTypeGQLModel](roles=["administrátor"])
         ],
         extensions=[
-            UserAbsoluteAccessControlExtension[InsertError, ProjectTypeGQLModel](
+            UserAbsoluteAccessControlExtension[InsertError, FinanceTypeGQLModel](
                 roles=["superadmin"]
             )
         ],
     )   
-    async def project_type_delete(
+    async def finance_type_delete(
         self,
         info: strawberry.Info,
-        event: ProjectTypeDeleteGQLModel,
+        event: FinanceTypeDeleteGQLModel,
         user_roles: typing.List[dict],
-    ) -> typing.Optional[DeleteError[ProjectTypeGQLModel]]:
-        return await Delete[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=event)
+    ) -> typing.Optional[DeleteError[FinanceTypeGQLModel]]:
+        return await Delete[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
     

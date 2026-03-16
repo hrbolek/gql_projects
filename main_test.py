@@ -109,7 +109,7 @@ from src.GraphTypeDefinitions import WhoAmIExtension, RolePermissionSchemaExtens
 class WhoAmIExtension_Debug(WhoAmIExtension):
     async def on_execute(self):
         query = self.execution_context.query
-        print(f"Executing {query}")
+        # print(f"Executing {query}")
 
         self.execution_context.context["user"] = current_user
         self.execution_context.context["ug_client"] = self.ug_query

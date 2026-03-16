@@ -1,0 +1,10 @@
+[run]
+source = src
+branch = True
+concurrency =
+    greenlet
+    thread
+
+[report]
+show_missing = True
+skip_empty = True

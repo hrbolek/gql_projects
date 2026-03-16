@@ -1,22 +1,22 @@
 
 import strawberry
 
-from .FinanceGQLModel import (
+from .Domain_Projects.FinanceGQLModel import (
     FinanceGQLModel, FinanceQuery, FinanceMutation
 )
-from .ProjectGQLModel import (
+from .Domain_Projects.ProjectGQLModel import (
     ProjectGQLModel, ProjectQuery, ProjectMutation
 )
-from .ProjectDependencyGQLModel import (
+from .Domain_Projects.ProjectDependencyGQLModel import (
     ProjectDependencyGQLModel, ProjectDependencyQuery, ProjectDependencyMutation
 )
-from .ProjectTypeGQLModel import (
+from .Domain_Projects.ProjectTypeGQLModel import (
     ProjectTypeGQLModel, ProjectTypeQuery, ProjectTypeMutation
 )
-from .FinanceTypeGQLModel import (  
+from .Domain_Projects.FinanceTypeGQLModel import (  
     FinanceTypeGQLModel, FinanceTypeQuery, FinanceTypeMutation
 )
-from .FinanceTransferGQLModel import (
+from .Domain_Projects.FinanceTransferGQLModel import (
     FinanceTransferGQLModel, FinanceTransferQuery, FinanceTransferMutation
 )
 
