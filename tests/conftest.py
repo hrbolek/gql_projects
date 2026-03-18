@@ -1,3 +1,4 @@
+import json
 import asyncio
 import logging
 import pytest
@@ -172,6 +173,15 @@ def SchemaExecutor(
         value = {"data": result.data} 
         if result.errors:
             value["errors"] = result.errors
+        ORANGE = "\033[33m"
+        RESET = "\033[0m"
+        if "_service" not in query:
+            logging.info(
+                "\n== QUERY =================\n"
+                f"{ORANGE}{query}{RESET}\n"
+                f"with variables:\n{ORANGE}{json.dumps(variable_values, indent=2)}{RESET}\n"
+                f"got response:\n{ORANGE}{json.dumps(value, indent=2)}{RESET}\n==================="
+            )
         return value
     return Execute
 
