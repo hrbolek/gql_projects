@@ -140,7 +140,7 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
         resolver=ScalarResolver["FinanceTypeGQLModel"](fkey_field_name="finance_type_id")
     )
 
-    transfers: typing.Optional[FinanceTransferGQLModel] = strawberry.field(
+    transfers: typing.List[FinanceTransferGQLModel] = strawberry.field(
         description="transfers from this finance (account)",
         permission_classes=[
             OnlyForAuthentized
