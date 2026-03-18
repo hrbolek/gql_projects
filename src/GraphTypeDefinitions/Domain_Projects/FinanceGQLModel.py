@@ -282,35 +282,39 @@ class FinanceDeleteGQLModel:
 )
 class FinanceMutation:
     @strawberry.mutation(
-        description="""Insert a sub finance""",
+        description="""Insert a finance without master""",
         permission_classes=[
             OnlyForAuthentized
             # SimpleInsertPermission[FinanceGQLModel](roles=["administrátor"])
         ],
         extensions=[
-            UserAccessControlExtension[InsertError, FinanceGQLModel](
+            UserAbsoluteAccessControlExtension[InsertError, FinanceGQLModel](
                 roles=[
-                    "administrátor"
+                    "superadmin"
                 ]
-            ),
-            UserRoleProviderExtension[InsertError, FinanceGQLModel](),
-            RbacProviderExtension[InsertError, FinanceGQLModel](),
-            LoadDataExtension[InsertError, FinanceGQLModel](
-                getLoader=FinanceGQLModel.getLoader,
-                primary_key_name="masterfinance_id"
             )
+            # UserAccessControlExtension[InsertError, FinanceGQLModel](
+            #     roles=[
+            #         "administrátor"
+            #     ]
+            # ),
+            # UserRoleProviderExtension[InsertError, FinanceGQLModel](),
+            # RbacProviderExtension[InsertError, FinanceGQLModel](),
+            # LoadDataExtension[InsertError, FinanceGQLModel](
+            #     getLoader=FinanceGQLModel.getLoader,
+            #     primary_key_name="masterfinance_id"
+            # )
         ],
     )
-    async def finance_insert(
+    async def finance_master_insert(
         self,
         info: strawberry.Info,
         finance: FinanceInsertGQLModel,
-        db_row: typing.Any,
-        rbacobject_id: IDType,
-        user_roles: typing.List[dict],
+        # db_row: typing.Any,
+        # rbacobject_id: IDType,
+        # user_roles: typing.List[dict],
     ) -> typing.Union[FinanceGQLModel, InsertError[FinanceGQLModel]]:
-        # TODO zmensit value u master finance, ktery je o jednu uroven vys, nez finance, ktery vkladame
-        # TODO vytvorit podrizeny RBAC objekt pro finance, ktery vkladame a ten nastavit jako podrizeny k RBAC objektu master finance
+        # TODO vytvorit RBAC objekt pro finance, ktery vkladame
         return await Insert[FinanceGQLModel].DoItSafeWay(info=info, entity=finance)
     
     @strawberry.mutation(
@@ -333,7 +337,7 @@ class FinanceMutation:
             )
         ],
     )
-    async def finance_master_insert(
+    async def finance_insert(
         self,
         info: strawberry.Info,
         finance: FinanceInsertGQLModel,
