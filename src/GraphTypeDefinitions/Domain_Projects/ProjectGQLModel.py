@@ -190,12 +190,52 @@ class ProjectQuery:
 
 from uoishelpers.resolvers import TreeInputStructureMixin, InputModelMixin
 @strawberry.input(
-    description="""Input type for creating a Project"""
+    description="""Input type for creating a Project within another project"""
 )
 class ProjectInsertGQLModel(TreeInputStructureMixin):
     getLoader = ProjectGQLModel.getLoader
     masterproject_id: IDType = strawberry.field(
         description="""Project parent id""",
+        # default=None
+    )
+    name: typing.Optional[str] = strawberry.field(
+        description="""Project name assigned by an administrator""",
+        default=None
+    )
+    name_en: typing.Optional[str] = strawberry.field(
+        description="""Project eng name assigned by an administrator""",
+        default=None
+    )
+    description: typing.Optional[str] = strawberry.field(
+        description="""Project description""",
+        default=None
+    )
+    done: typing.Optional[bool] = strawberry.field(
+        description="""Is the project done?""",
+        default=None
+    )
+    id: typing.Optional[IDType] = strawberry.field(
+        description="""Project id""",
+        default=None
+    )
+    subprojects: typing.Optional[typing.List["ProjectInsertGQLModel"]] = strawberry.field(
+        description="sub projects",
+        default_factory=list
+    )
+    project_type_id: typing.Optional[IDType] = strawberry.field(
+        description="""Project type id""",
+        default=None
+    )
+    rbacobject_id: strawberry.Private[IDType] = None
+    createdby_id: strawberry.Private[IDType] = None
+
+@strawberry.input(
+    description="""Input type for creating a Project within another project"""
+)
+class ProjectInsertMasterGQLModel(TreeInputStructureMixin):
+    getLoader = ProjectGQLModel.getLoader
+    group_id: IDType = strawberry.field(
+        description="""Where the project belongs (faculty, university, ...)""",
         # default=None
     )
     name: typing.Optional[str] = strawberry.field(
@@ -299,6 +339,7 @@ class ProjectMutation:
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectGQLModel, InsertError[ProjectGQLModel]]:
         # TODO vytvorit podrizeny RBAC objekt pro project, ktery vkladame a ten nastavit jako podrizeny k RBAC objektu master project
+        project.rbacobject_id = rbacobject_id
         return await Insert[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
     
     @strawberry.mutation(
@@ -316,18 +357,21 @@ class ProjectMutation:
             RbacProviderExtension[InsertError, ProjectGQLModel](),
             LoadDataExtension[InsertError, ProjectGQLModel](
                 getLoader=ProjectGQLModel.getLoader,
-                primary_key_name="masterproject_id"
+                primary_key_name="group_id"
             )
         ],
     )
     async def project_master_insert(
         self,
         info: strawberry.Info,
-        project: ProjectInsertGQLModel,
+        project: ProjectInsertMasterGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectGQLModel, InsertError[ProjectGQLModel]]:
+        # TODO vytvorit podrizeny RBAC objekt pro project, ktery vkladame a ten nastavit jako podrizeny k RBAC objektu master project        
+        project.rbacobject_id = project.group_id
+        # TODO, oveřit, že group_id odkazuje na existující group požadavaného typu
         return await Insert[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
 
 
