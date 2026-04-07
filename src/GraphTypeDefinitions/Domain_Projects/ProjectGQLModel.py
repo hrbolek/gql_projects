@@ -41,18 +41,37 @@ from src.GraphTypeDefinitions.BaseGQLModel import BaseGQLModel, IDType, Relation
 
 ProjectTypeGQLModel = typing.Annotated["ProjectTypeGQLModel", strawberry.lazy(".ProjectTypeGQLModel")]
 FinanceGQLModel = typing.Annotated["FinanceGQLModel", strawberry.lazy(".FinanceGQLModel")]
+ProjectDependencyGQLModel = typing.Annotated["ProjectDependencyGQLModel", strawberry.lazy(".ProjectDependencyGQLModel")]
 
-@createInputs2
+@createInputs2#(v2=True)
 class ProjectInputFilter:
     name: str
     name_en: str
     description: str
-    project_type_id: IDType
-    masterproject_id: IDType
-    done: bool
-    start_date: datetime.datetime
-    end_date: datetime.datetime
-    id: IDType
+    project_type_id: IDType = strawberry.field(
+        description="Filter for project type id", 
+        # directives=[Relation(to="ProjectTypeGQLModel")]
+    )
+    masterproject_id: IDType = strawberry.field(
+        description="Filter for project id", 
+        # directives=[Relation(to="ProjectTypeGQLModel")]
+    )
+    done: bool = strawberry.field(
+        description="Filter for finished projects", 
+        # directives=[Relation(to="ProjectTypeGQLModel")]
+    )
+    start_date: datetime.datetime = strawberry.field(
+        description="Filter for project start date", 
+        # directives=[Relation(to="ProjectTypeGQLModel")]
+    )
+    end_date: datetime.datetime = strawberry.field(
+        description="Filter for project end date", 
+        # directives=[Relation(to="ProjectTypeGQLModel")]
+    )
+    id: IDType = strawberry.field(
+        description="Filter for project id", 
+        # directives=[Relation(to="ProjectTypeGQLModel")]
+    )
 
 @strawberry.federation.type(
     description="""Entity representing a Project""",
@@ -171,7 +190,32 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
         resolver=ScalarResolver["ProjectTypeGQLModel"](fkey_field_name="project_type_id")
     )
 
-
+    strawberry.field(
+        description="""Projects which are linked to this project as next projects (e.g. projects which have this project as masterproject and at the same time have startdate greater than enddate of this project)""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+    async def prevs(self, info: strawberry.Info) -> typing.List["ProjectDependencyGQLModel"]:
+        # TODO, implementovat resolver pro nexts, ktery vrati projekty, ktere jsou navazany na tento projekt (napr. projekty, ktere maji tento projekt jako masterproject a zároveň mají startdate větší než enddate tohoto projektu)
+        from .ProjectDependencyGQLModel import ProjectDependencyGQLModel        
+        loader = ProjectDependencyGQLModel.getLoader(info)
+        dependencies = await loader.filter_by(next_id=self.id)
+        return [ProjectDependencyGQLModel.from_dataclass(dep) for dep in dependencies]
+    
+    strawberry.field(
+        description="""Projects which are linked to this project as next projects (e.g. projects which have this project as masterproject and at the same time have startdate greater than enddate of this project)""",
+        permission_classes=[
+            OnlyForAuthentized
+        ]
+    )
+    async def nexts(self, info: strawberry.Info) -> typing.List["ProjectDependencyGQLModel"]:
+        # TODO, implementovat resolver pro nexts, ktery vrati projekty, ktere jsou navazany na tento projekt (napr. projekty, ktere maji tento projekt jako masterproject a zároveň mají startdate větší než enddate tohoto projektu)
+        from .ProjectDependencyGQLModel import ProjectDependencyGQLModel        
+        loader = ProjectDependencyGQLModel.getLoader(info)
+        dependencies = await loader.filter_by(previous_id=self.id)
+        return [ProjectDependencyGQLModel.from_dataclass(dep) for dep in dependencies]
+    
 @strawberry.interface(
     description="""Project queries"""
 )

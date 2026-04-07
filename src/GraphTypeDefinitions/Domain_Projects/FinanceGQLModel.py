@@ -140,13 +140,38 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
         resolver=ScalarResolver["FinanceTypeGQLModel"](fkey_field_name="finance_type_id")
     )
 
-    transfers: typing.List[FinanceTransferGQLModel] = strawberry.field(
+    # transfers: typing.List["FinanceTransferGQLModel"] = strawberry.field(
+    #     description="transfers from this finance (account)",
+    #     permission_classes=[
+    #         OnlyForAuthentized
+    #     ],
+    #     resolver=VectorResolver["FinanceTransferGQLModel"](fkey_field_name="finance_source_id", whereType=FinanceTransferInputFilter)
+    # )
+
+    strawberry.field(
         description="transfers from this finance (account)",
         permission_classes=[
             OnlyForAuthentized
         ],
-        resolver=VectorResolver["FinanceTransferGQLModel"](fkey_field_name="finance_source_id", whereType=FinanceTransferInputFilter)
     )
+    async def transfers_from(self, info: strawberry.Info) -> typing.List["FinanceTransferGQLModel"]:
+        from .FinanceTransferGQLModel import FinanceTransferGQLModel
+        loader = FinanceTransferGQLModel.getLoader(info)
+        rows = await loader.filter_by(finance_destination_id=self.id)
+        return [FinanceTransferGQLModel.from_dataclass(row) for row in rows]
+
+    strawberry.field(
+        description="transfers to this finance (account)",
+        permission_classes=[
+            OnlyForAuthentized
+        ],
+    )
+    async def transfers_to(self, info: strawberry.Info) -> typing.List["FinanceTransferGQLModel"]:
+        from .FinanceTransferGQLModel import FinanceTransferGQLModel
+        loader = FinanceTransferGQLModel.getLoader(info)
+        rows = await loader.filter_by(finance_source_id=self.id)
+        return [FinanceTransferGQLModel.from_dataclass(row) for row in rows]
+
 
     async def _project_id(self, info: strawberry.Info):
         from .ProjectGQLModel import ProjectGQLModel

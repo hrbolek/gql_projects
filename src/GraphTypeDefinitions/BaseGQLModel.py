@@ -3,16 +3,21 @@ import datetime
 import typing
 import strawberry
 import dataclasses
+import uuid6
 
 from uoishelpers.gqlpermissions import OnlyForAuthentized, RBACObjectGQLModel
 
 IDType = uuid.UUID
+
 UserGQLModel = typing.Annotated["UserGQLModel", strawberry.lazy("src.GraphTypeDefinitions.Domain_UG.UserGQLModel")]
 
 from strawberry.federation.schema_directive import schema_directive, Location
 from strawberry.directive import DirectiveLocation
 
 from ..Dataloaders import getLoadersFromInfo
+
+def createUuid():
+    return uuid6.uuid7()
 
 @schema_directive(
     repeatable=True,
