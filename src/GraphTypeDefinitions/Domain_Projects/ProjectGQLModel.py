@@ -34,6 +34,7 @@ from uoishelpers.gqlpermissions.UserRoleProviderExtension import UserRoleProvide
 from uoishelpers.gqlpermissions.UserAccessControlExtension import UserAccessControlExtension
 from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAbsoluteAccessControlExtension
 
+from ..ApplicationInfo import ApplicationInfo
 from src.DBDefinitions.ProjectDBModel import ProjectDBModel
 
 from src.GraphTypeDefinitions.BaseGQLModel import BaseGQLModel, IDType, Relation
@@ -196,12 +197,11 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
             OnlyForAuthentized
         ]
     )
-    async def prevs(self, info: strawberry.Info) -> typing.List["ProjectDependencyGQLModel"]:
-        # TODO, implementovat resolver pro nexts, ktery vrati projekty, ktere jsou navazany na tento projekt (napr. projekty, ktere maji tento projekt jako masterproject a zároveň mají startdate větší než enddate tohoto projektu)
-        from .ProjectDependencyGQLModel import ProjectDependencyGQLModel        
-        loader = ProjectDependencyGQLModel.getLoader(info)
-        dependencies = await loader.filter_by(next_id=self.id)
+    async def prevs(self, info: ApplicationInfo) -> typing.List["ProjectDependencyGQLModel"]:
+        ProjectService = info.ServiceCtx.Services.ProjectService
+        dependencies = await ProjectService.PreviousProjects(info.ServiceCtx, id=self.id)
         return [ProjectDependencyGQLModel.from_dataclass(dep) for dep in dependencies]
+        
     
     strawberry.field(
         description="""Projects which are linked to this project as next projects (e.g. projects which have this project as masterproject and at the same time have startdate greater than enddate of this project)""",
@@ -209,11 +209,9 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
             OnlyForAuthentized
         ]
     )
-    async def nexts(self, info: strawberry.Info) -> typing.List["ProjectDependencyGQLModel"]:
-        # TODO, implementovat resolver pro nexts, ktery vrati projekty, ktere jsou navazany na tento projekt (napr. projekty, ktere maji tento projekt jako masterproject a zároveň mají startdate větší než enddate tohoto projektu)
-        from .ProjectDependencyGQLModel import ProjectDependencyGQLModel        
-        loader = ProjectDependencyGQLModel.getLoader(info)
-        dependencies = await loader.filter_by(previous_id=self.id)
+    async def nexts(self, info: ApplicationInfo) -> typing.List["ProjectDependencyGQLModel"]:
+        ProjectService = info.ServiceCtx.Services.ProjectService
+        dependencies = await ProjectService.NextProjects(info.ServiceCtx, id=self.id)
         return [ProjectDependencyGQLModel.from_dataclass(dep) for dep in dependencies]
     
 @strawberry.interface(
@@ -376,15 +374,28 @@ class ProjectMutation:
     )
     async def project_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project: ProjectInsertGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectGQLModel, InsertError[ProjectGQLModel]]:
-        # TODO vytvorit podrizeny RBAC objekt pro project, ktery vkladame a ten nastavit jako podrizeny k RBAC objektu master project
-        project.rbacobject_id = rbacobject_id
-        return await Insert[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
+        ProjectService = info.ServiceCtx.Services.ProjectService
+        result = await ProjectService.ExecuteServiceMethod(
+            ProjectService.Create(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(project),
+                rbacobject_id=rbacobject_id
+            ),
+            OK=ProjectGQLModel,
+            Error=lambda msg: InsertError[ProjectGQLModel](
+                code="edbb8e7a-a769-4db3-88b5-9b28b50c99ef",
+                location="project_insert",
+                msg=msg,
+                _input=project
+            )
+        )
+        return result
     
     @strawberry.mutation(
         description="""Insert a master project""",
@@ -407,18 +418,28 @@ class ProjectMutation:
     )
     async def project_master_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project: ProjectInsertMasterGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectGQLModel, InsertError[ProjectGQLModel]]:
-        # TODO vytvorit podrizeny RBAC objekt pro project, ktery vkladame a ten nastavit jako podrizeny k RBAC objektu master project        
-        project.rbacobject_id = project.group_id
-        # TODO, oveřit, že group_id odkazuje na existující group požadavaného typu
-        return await Insert[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
-
-
+        ProjectService = info.ServiceCtx.Services.ProjectService
+        result = await ProjectService.ExecuteServiceMethod(
+            ProjectService.CreateMasterProject(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(project),
+                masterrbacobject_id=rbacobject_id
+            ),
+            OK=ProjectGQLModel,
+            Error=lambda msg: InsertError[ProjectGQLModel](
+                code="4f885abd-4076-4d99-a749-a7db074b42dd",
+                location="project_master_insert",
+                msg=msg,
+                _input=project
+            )
+        )
+        return result
 
     @strawberry.mutation(
         description="""Update a Project""",
@@ -438,13 +459,28 @@ class ProjectMutation:
     )
     async def project_update(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project: ProjectUpdateGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectGQLModel, UpdateError[ProjectGQLModel]]:
-        return await Update[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
+        ProjectService = info.ServiceCtx.Services.ProjectService
+        result = await ProjectService.ExecuteServiceMethod(
+            ProjectService.Update(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(project),
+            ),
+            OK=ProjectGQLModel,
+            Error=lambda msg: UpdateError[ProjectGQLModel](
+                code="6915527e-a68f-40c8-8aff-23333e798091",
+                location="project_update",
+                msg=msg,
+                _input=project,
+                entity=ProjectGQLModel.from_dataclass(db_row)
+            )
+        )     
+        return result
     
 
     @strawberry.mutation(
@@ -465,11 +501,27 @@ class ProjectMutation:
     )   
     async def project_delete(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project: ProjectDeleteGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[ProjectGQLModel]]:
-        return await Delete[ProjectGQLModel].DoItSafeWay(info=info, entity=project)
+        ProjectService = info.ServiceCtx.Services.ProjectService
+        result = await ProjectService.ExecuteServiceMethod(
+            ProjectService.Delete(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(project),
+            ),
+            OK=lambda result: None,
+            Error=lambda msg: DeleteError[ProjectGQLModel](
+                code="422cdbe2-6699-4b72-bfbb-777b418f35ae",
+                location="project_delete",
+                msg=msg,
+                _input=project,
+                entity=ProjectGQLModel.from_dataclass(db_row)
+            )
+        )   
+        return result
+        
     

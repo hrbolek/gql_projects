@@ -317,8 +317,8 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         dbModels = [
             ProjectTypeDBModel,
             FinanceTypeDBModel,
-            ProjectDBModel,
             FinanceDBModel,
+            ProjectDBModel,
             ProjectDependencyDBModel,
             FinanceTransferDBModel
         ]

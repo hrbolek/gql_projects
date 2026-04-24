@@ -37,7 +37,7 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 from src.DBDefinitions.ProjectDependencyDBModel import ProjectDependencyDBModel
 
 from ..BaseGQLModel import BaseGQLModel, IDType, Relation
-
+from ..ApplicationInfo import ApplicationInfo
 ProjectGQLModel = typing.Annotated["ProjectGQLModel", strawberry.lazy(".ProjectGQLModel")]
 
 @createInputs2
@@ -177,7 +177,7 @@ class ProjectDependencyMutation:
     )
     async def project_dependency_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project_dependency: ProjectDependencyInsertGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
@@ -185,16 +185,21 @@ class ProjectDependencyMutation:
     ) -> typing.Union[ProjectDependencyGQLModel, InsertError[ProjectDependencyGQLModel]]:
         from .ProjectGQLModel import ProjectGQLModel
         project_dependency.rbacobject_id = rbacobject_id
-        next_project = await ProjectGQLModel.getLoader(info).load(project_dependency.next_id)
-        source_project = db_row
-        if source_project.masterproject_id != next_project.masterproject_id:
-            return InsertError[ProjectDependencyGQLModel](
+        ProjectDependencyService = info.ServiceCtx.Services.ProjectDependencyService
+        result = await ProjectDependencyService.ExecuteServiceMethod(
+            ProjectDependencyService.Create(
+                ctx=info.context,
+                **dataclasses.asdict(project_dependency)
+            ),
+            OK=ProjectDependencyGQLModel,
+            Error=lambda msg: InsertError[ProjectDependencyGQLModel](
+                msg=msg,
                 _input=project_dependency,
-                msg=f"Source project {source_project.masterproject_id} does not match the next project {next_project.masterproject_id}",
-                code="16f66af3-052e-4ac8-8b07-035a2a5d9114"
+                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                location="ProjectDependencyMutation.project_dependency_insert"
             )
-        return await Insert[ProjectDependencyGQLModel].DoItSafeWay(info=info, entity=project_dependency)
-    
+        )
+        return result
 
     @strawberry.mutation(
         description="""Update a ProjectDependency""",
@@ -215,13 +220,27 @@ class ProjectDependencyMutation:
     )
     async def project_dependency_update(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project_dependency: ProjectDependencyUpdateGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectDependencyGQLModel, UpdateError[ProjectDependencyGQLModel]]:
-        return await Update[ProjectDependencyGQLModel].DoItSafeWay(info=info, entity=project_dependency)
+        ProjectDependencyService = info.ServiceCtx.Services.ProjectDependencyService
+        result = await ProjectDependencyService.ExecuteServiceMethod(
+            ProjectDependencyService.Update(
+                ctx=info.context,
+                **dataclasses.asdict(project_dependency)
+            ),
+            OK=ProjectDependencyGQLModel,
+            Error=lambda msg: UpdateError[ProjectDependencyGQLModel](
+                msg=msg,
+                _input=project_dependency,
+                code="26f66af3-052e-4ac8-8b07-035a2a5d9114",
+                location="ProjectDependencyMutation.project_dependency_update"
+            )
+        )
+        return result
     
 
     @strawberry.mutation(
@@ -242,11 +261,25 @@ class ProjectDependencyMutation:
     )   
     async def project_dependency_delete(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project_dependency: ProjectDependencyDeleteGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[ProjectDependencyGQLModel]]:
-        return await Delete[ProjectDependencyGQLModel].DoItSafeWay(info=info, entity=project_dependency)
-    
+        ProjectDependencyService = info.ServiceCtx.Services.ProjectDependencyService
+        result = await ProjectDependencyService.ExecuteServiceMethod(
+            ProjectDependencyService.Delete(
+                ctx=info.context,
+                **dataclasses.asdict(project_dependency)
+            ),
+            OK=lambda: None,
+            Error=lambda msg: DeleteError[ProjectDependencyGQLModel](
+                msg=msg,
+                _input=project_dependency,
+                entity=ProjectDependencyGQLModel.from_dataclass(db_row) if db_row else None,
+                code="36f66af3-052e-4ac8-8b07-035a2a5d9114",
+                location="ProjectDependencyMutation.project_dependency_delete"
+            )
+        )
+        return result

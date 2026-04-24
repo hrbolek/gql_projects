@@ -4,10 +4,11 @@ from typing import Union
 import strawberry
 
 from .BaseGQLModel import Relation, IDType
-from src.GraphTypeDefinitions.Domain_UG.UserGQLModel import UserGQLModel
-from src.GraphTypeDefinitions.Domain_UG.GroupGQLModel import GroupGQLModel
-
+from .Domain_UG.UserGQLModel import UserGQLModel
+from .Domain_UG.GroupGQLModel import GroupGQLModel
 from .Domain_Projects import Query_Domain_Projects, Mutation_Domain_Projects
+
+from .ApplicationInfo import ApplicationInfo
 
 @strawberry.type(description="""Type for query root""")
 class Query(
@@ -21,10 +22,13 @@ class Mutation(
 ):
     pass
 
-
+from strawberry.schema.config import StrawberryConfig
 schema = strawberry.federation.Schema(
     query=Query,
     mutation=Mutation,
+    config=StrawberryConfig(
+        info_class=ApplicationInfo
+    ),
     types=(UserGQLModel, GroupGQLModel, ),
     extensions=[],
     schema_directives=[Relation]    

@@ -37,6 +37,7 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 from src.DBDefinitions import FinanceTypeDBModel
 
 from ..BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..ApplicationInfo import ApplicationInfo
 
 @createInputs2
 class FinanceTypeInputFilter:
@@ -199,12 +200,26 @@ class FinanceTypeMutation:
     )
     async def finance_type_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         event: FinanceTypeInsertGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTypeGQLModel, InsertError[FinanceTypeGQLModel]]:
-        return await Insert[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
-    
+        FinanceTypeService = info.context.Services.FinanceTypeService
+        result = await FinanceTypeService.ExecuteServiceMethod(
+            FinanceTypeService.Create(
+                ctx=info.context,
+                **dataclasses.asdict(event)
+            ),
+            OK=lambda project_type: project_type,
+            Error=lambda msg: InsertError[FinanceTypeGQLModel](
+                msg=msg,
+                entity=event,
+                code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
+                location="FinanceTypeMutation.finance_type_insert",
+                _input=event
+            )
+        )
+        return result
 
     @strawberry.mutation(
         description="""Update a Event type.""",
@@ -220,12 +235,26 @@ class FinanceTypeMutation:
     )
     async def finance_type_update(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         event: FinanceTypeUpdateGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTypeGQLModel, UpdateError[FinanceTypeGQLModel]]:
-        return await Update[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
-    
+        FinanceTypeService = info.context.Services.FinanceTypeService
+        result = await FinanceTypeService.ExecuteServiceMethod(
+            FinanceTypeService.Update(
+                ctx=info.context,
+                **dataclasses.asdict(event)
+            ),
+            OK=lambda project_type: project_type,
+            Error=lambda msg: UpdateError[FinanceTypeGQLModel](
+                msg=msg,
+                entity=event,
+                code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
+                location="FinanceTypeMutation.finance_type_update",
+                _input=event
+            )
+        )
+        return result
 
     @strawberry.mutation(
         description="""Delete a Event type""",
@@ -241,9 +270,23 @@ class FinanceTypeMutation:
     )   
     async def finance_type_delete(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         event: FinanceTypeDeleteGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[FinanceTypeGQLModel]]:
-        return await Delete[FinanceTypeGQLModel].DoItSafeWay(info=info, entity=event)
-    
+        FinanceTypeService = info.context.Services.FinanceTypeService
+        result = await FinanceTypeService.ExecuteServiceMethod(
+            FinanceTypeService.Delete(
+                ctx=info.context,
+                **dataclasses.asdict(event)
+            ),
+            OK=lambda: None,
+            Error=lambda msg: DeleteError[FinanceTypeGQLModel](
+                msg=msg,
+                entity=FinanceTypeGQLModel.resolve_reference(info=info, id=event.id),
+                code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
+                location="FinanceTypeMutation.finance_type_delete",
+                _input=event
+            )
+        )
+        return result

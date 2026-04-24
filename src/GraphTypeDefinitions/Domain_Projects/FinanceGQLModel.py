@@ -33,10 +33,11 @@ from uoishelpers.gqlpermissions.RbacInsertProviderExtension import RbacInsertPro
 from uoishelpers.gqlpermissions.UserRoleProviderExtension import UserRoleProviderExtension
 from uoishelpers.gqlpermissions.UserAccessControlExtension import UserAccessControlExtension
 from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAbsoluteAccessControlExtension
-
-from src.DBDefinitions.FinanceDBModel import FinanceDBModel
+from uoishelpers.dataloaders.IDLoader import IDLoader
+# from src.DBDefinitions.FinanceDBModel import FinanceDBModel
 
 from ..BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..ApplicationInfo import ApplicationInfo
 
 FinanceTypeGQLModel = typing.Annotated["FinanceTypeGQLModel", strawberry.lazy(".FinanceTypeGQLModel")]
 FinanceTransferGQLModel = typing.Annotated["FinanceTransferGQLModel", strawberry.lazy(".FinanceTransferGQLModel")]
@@ -57,7 +58,11 @@ class FinanceInputFilter:
     keys=["id"]
 )
 class FinanceGQLModel(BaseGQLModel):
-    DBModel = FinanceDBModel
+    # DBModel = FinanceDBModel
+    @classmethod
+    def getLoader(cls, info: ApplicationInfo) -> IDLoader:
+        return info.loaders.FinanceDBModel
+        # return getLoadersFromInfo(info).get(FinanceDBModel)
 
 
     path: typing.Optional[str] = strawberry.field(
@@ -154,10 +159,11 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
             OnlyForAuthentized
         ],
     )
-    async def transfers_from(self, info: strawberry.Info) -> typing.List["FinanceTransferGQLModel"]:
-        from .FinanceTransferGQLModel import FinanceTransferGQLModel
-        loader = FinanceTransferGQLModel.getLoader(info)
-        rows = await loader.filter_by(finance_destination_id=self.id)
+    async def transfers_from(self, info: ApplicationInfo) -> typing.List["FinanceTransferGQLModel"]:
+        FinanceTransferService = info.ServiceCtx.Services.FinanceTransferService
+        rows = await FinanceTransferService.TransfersFrom(
+            ctx=info.ServiceCtx, finance_id=self.id
+        )
         return [FinanceTransferGQLModel.from_dataclass(row) for row in rows]
 
     strawberry.field(
@@ -166,21 +172,22 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
             OnlyForAuthentized
         ],
     )
-    async def transfers_to(self, info: strawberry.Info) -> typing.List["FinanceTransferGQLModel"]:
-        from .FinanceTransferGQLModel import FinanceTransferGQLModel
-        loader = FinanceTransferGQLModel.getLoader(info)
-        rows = await loader.filter_by(finance_source_id=self.id)
+    async def transfers_to(self, info: ApplicationInfo) -> typing.List["FinanceTransferGQLModel"]:
+        FinanceTransferService = info.ServiceCtx.Services.FinanceTransferService
+        rows = await FinanceTransferService.TransfersTo(
+            ctx=info.ServiceCtx, finance_id=self.id
+        )
         return [FinanceTransferGQLModel.from_dataclass(row) for row in rows]
 
 
-    async def _project_id(self, info: strawberry.Info):
-        from .ProjectGQLModel import ProjectGQLModel
-        loader = ProjectGQLModel.getLoader(info)
-        projects = await loader.filter_by(finance_id=self.id)
-        projects = list(projects)
-        if len(projects) == 1: return ProjectGQLModel.from_dataclass(projects[0])
-        if len(projects) == 0: return None
-        return projects
+    # async def _project_id(self, info: strawberry.Info):
+    #     from .ProjectGQLModel import ProjectGQLModel
+    #     loader = ProjectGQLModel.getLoader(info)
+    #     projects = await loader.filter_by(finance_id=self.id)
+    #     projects = list(projects)
+    #     if len(projects) == 1: return ProjectGQLModel.from_dataclass(projects[0])
+    #     if len(projects) == 0: return None
+    #     return projects
 
     @strawberry.field(
         description="project id related to this finance",
@@ -188,10 +195,10 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
             OnlyForAuthentized
         ]
     )
-    async def project_id(self, info: strawberry.Info) -> typing.Optional[IDType]:
-        result = await self._project_id(info=info)
-        assert not isinstance(result, list), f"There are many projects assigned to this finance, this is not expected"
-        return result.id if result else result
+    async def project_id(self, info: ApplicationInfo) -> typing.Optional[IDType]:
+        FinanceService = info.ServiceCtx.Services.FinanceService
+        db_row = await FinanceService.Project(ctx=info.ServiceCtx, id=self.id)
+        return db_row.id if db_row else None
     
     @strawberry.field(
         description="project related to this finance",
@@ -199,12 +206,11 @@ Materializovaná cesta reprezentující umístění skupiny v hierarchii.""",
             OnlyForAuthentized
         ]
     )
-    async def project(self, info: strawberry.Info) -> typing.Optional[ProjectGQLModel]:
-        result = await self._project_id(info=info)
-        assert not isinstance(result, list), f"There are many projects assigned to this finance, this is not expected"
-        return result
-    
-    
+    async def project(self, info: ApplicationInfo) -> typing.Optional[ProjectGQLModel]:
+        from .ProjectGQLModel import ProjectGQLModel
+        FinanceService = info.ServiceCtx.Services.FinanceService
+        result = await FinanceService.Project(ctx=info.ServiceCtx, id=self.id)
+        return ProjectGQLModel.from_dataclass(result) if result else None
 
 
 @strawberry.interface(
@@ -278,15 +284,15 @@ class FinanceUpdateGQLModel:
     )
     name: typing.Optional[str] = strawberry.field(
         description="""Finance name assigned by an administrator""",
-        default=None
+        default=strawberry.UNSET
     )
     name_en: typing.Optional[str] = strawberry.field(
         description="""Finance eng name assigned by an administrator""",
-        default=None
+        default=strawberry.UNSET
     )
     description: typing.Optional[str] = strawberry.field(
         description="""Finance description""",
-        default=None
+        default=strawberry.UNSET
     )
 
     changedby_id: strawberry.Private[IDType] = None
@@ -333,15 +339,28 @@ class FinanceMutation:
     )
     async def finance_master_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance: FinanceInsertGQLModel,
         # db_row: typing.Any,
         # rbacobject_id: IDType,
         # user_roles: typing.List[dict],
     ) -> typing.Union[FinanceGQLModel, InsertError[FinanceGQLModel]]:
-        # TODO vytvorit RBAC objekt pro finance, ktery vkladame
-        return await Insert[FinanceGQLModel].DoItSafeWay(info=info, entity=finance)
-    
+        FinanceService = info.ServiceCtx.Services.FinanceService
+        result = await FinanceService.ExecuteServiceMethod(
+            FinanceService.CreateMasterFinance(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(finance)
+            ),
+            Error=lambda msg: InsertError[FinanceGQLModel](
+                code="d1660087-a7a9-471f-b2a6-58c2e42c9e6a",
+                location="finance_insert",
+                msg=msg,
+                _input=finance
+            ),
+            OK=FinanceGQLModel
+        )
+        return result
+
     @strawberry.mutation(
         description="""Insert a master finance""",
         permission_classes=[
@@ -364,14 +383,27 @@ class FinanceMutation:
     )
     async def finance_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance: FinanceInsertGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceGQLModel, InsertError[FinanceGQLModel]]:
-        return await Insert[FinanceGQLModel].DoItSafeWay(info=info, entity=finance)
-
+        FinanceService = info.ServiceCtx.Services.FinanceService
+        result = await FinanceService.ExecuteServiceMethod(
+            FinanceService.CreateMasterFinance(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(finance)
+            ),
+            Error=lambda msg: InsertError[FinanceGQLModel](
+                code="d1660087-a7a9-471f-b2a6-58c2e42c9e6a",
+                location="finance_insert",
+                msg=msg,
+                _input=finance
+            ),
+            OK=FinanceGQLModel
+        )
+        return result
 
 
     @strawberry.mutation(
@@ -394,14 +426,29 @@ class FinanceMutation:
     )
     async def finance_update(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance: FinanceUpdateGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceGQLModel, UpdateError[FinanceGQLModel]]:
-        return await Update[FinanceGQLModel].DoItSafeWay(info=info, entity=finance)
-    
+        FinanceService = info.ServiceCtx.Services.FinanceService
+        result = await FinanceService.ExecuteServiceMethod(
+            FinanceService.Update(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(finance)
+            ),
+            Error=lambda msg: UpdateError[FinanceGQLModel](
+                code="e1660087-a7a9-471f-b2a6-58c2e42c9e6a",
+                location="finance_update",
+                msg=msg,
+                _input=finance,
+                entity=ProjectGQLModel.from_dataclass(db_row)
+            ),
+            OK=FinanceGQLModel
+        )
+        return result
+
 
     @strawberry.mutation(
         description="""Delete a Finance""",
@@ -423,11 +470,26 @@ class FinanceMutation:
     )   
     async def finance_delete(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance: FinanceDeleteGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[FinanceGQLModel]]:
-        return await Delete[FinanceGQLModel].DoItSafeWay(info=info, entity=finance)
+        FinanceService = info.ServiceCtx.Services.FinanceService
+        result = await FinanceService.ExecuteServiceMethod(
+            FinanceService.Delete(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(finance)
+            ),
+            Error=lambda msg: DeleteError[FinanceGQLModel](
+                code="f1660087-a7a9-471f-b2a6-58c2e42c9e6a",
+                location="finance_delete",
+                msg=msg,
+                _input=finance,
+                entity=ProjectGQLModel.from_dataclass(db_row)
+            ),
+            OK=lambda: None
+        )
+        return result
     

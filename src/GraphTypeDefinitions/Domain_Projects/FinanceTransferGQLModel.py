@@ -37,6 +37,7 @@ from uoishelpers.gqlpermissions.UserAbsoluteAccessControlExtension import UserAb
 from src.DBDefinitions.FinanceTransferDBModel import FinanceTransferDBModel
 
 from ..BaseGQLModel import BaseGQLModel, IDType, Relation
+from ..ApplicationInfo import ApplicationInfo
 
 FinanceGQLModel = typing.Annotated["FinanceGQLModel", strawberry.lazy(".FinanceGQLModel")]
 
@@ -215,32 +216,29 @@ class FinanceTransferMutation:
     )
     async def finance_transfer_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance_transfer: FinanceTransferInsertGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTransferGQLModel, InsertError[FinanceTransferGQLModel]]:
-        # TODO zmensit value u finance_source_id a navysit value u finance_destination_id o amount, ktery posilame ve financetransferu
-        from .FinanceGQLModel import FinanceGQLModel
-        finance_transfer.rbacobject_id = rbacobject_id
-        destination_finance = await FinanceGQLModel.getLoader(info).load(finance_transfer.finance_destination_id)
-        source_finance = db_row
-        if source_finance.value is None:
-            return InsertError[FinanceTransferGQLModel](
+        FinanceTransferService = info.ServiceCtx.Services.FinanceTransferService
+        result = await FinanceTransferService.ExecuteServiceMethod(
+            FinanceTransferService.Create(
+                ctx=info.ServiceCtx,
+                finance_source_id=finance_transfer.finance_source_id,
+                finance_destination_id=finance_transfer.finance_destination_id,
+                amount=finance_transfer.amount
+            ),
+            OK=FinanceTransferGQLModel,
+            Error=lambda msg: InsertError[FinanceTransferGQLModel](
+                msg=msg,
                 _input=finance_transfer,
-                msg="Source finance has no value",
-                code="16f66af3-052e-4ac8-8b07-035a2a5d9114"
+                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                location="FinanceTransferMutation.finance_transfer_insert"
             )
-        if source_finance.value < finance_transfer.amount:
-            return InsertError[FinanceTransferGQLModel](
-                _input=finance_transfer,
-                msg="Source finance has insufficient value",
-                code="46084b9a-324d-4751-b2fd-a5f4a8740a99"
-            )
-        source_finance.value -= finance_transfer.amount
-        destination_finance.value = (destination_finance.value or 0) + finance_transfer.amount
-        return await Insert[FinanceTransferGQLModel].DoItSafeWay(info=info, entity=finance_transfer)
+        )
+        return result
     
 
     @strawberry.mutation(
@@ -264,14 +262,28 @@ class FinanceTransferMutation:
     )
     async def finance_transfer_update(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance_transfer: FinanceTransferUpdateGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTransferGQLModel, UpdateError[FinanceTransferGQLModel]]:
-        return await Update[FinanceTransferGQLModel].DoItSafeWay(info=info, entity=finance_transfer)
-    
+        FinanceTransferService = info.ServiceCtx.Services.FinanceTransferService
+        result = await FinanceTransferService.ExecuteServiceMethod(
+            FinanceTransferService.Update(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(finance_transfer)
+            ),
+            OK=FinanceTransferGQLModel,
+            Error=lambda msg: UpdateError[FinanceTransferGQLModel](
+                msg=msg,
+                _input=finance_transfer,
+                entity=FinanceTransferGQLModel.from_dataclass(db_row),
+                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                location="FinanceTransferMutation.finance_transfer_update"
+            )
+        )
+        return result
 
     @strawberry.mutation(
         description="""Delete a FinanceTransfer""",
@@ -294,12 +306,25 @@ class FinanceTransferMutation:
     )   
     async def finance_transfer_delete(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         finance_transfer: FinanceTransferDeleteGQLModel,
         db_row: typing.Any,
         rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[FinanceTransferGQLModel]]:
-        # TODO navysit value u finance_source_id o amount, ktery posilame ve financetransferu a zmensit value u finance_destination_id o amount, ktery posilame ve financetransferu
-        return await Delete[FinanceTransferGQLModel].DoItSafeWay(info=info, entity=finance_transfer)
-    
+        FinanceTransferService = info.ServiceCtx.Services.FinanceTransferService
+        result = await FinanceTransferService.ExecuteServiceMethod(
+            FinanceTransferService.Delete(
+                ctx=info.ServiceCtx,
+                **dataclasses.asdict(finance_transfer)
+            ),
+            OK=lambda: None,
+            Error=lambda msg: DeleteError[FinanceTransferGQLModel](
+                msg=msg,
+                _input=finance_transfer,
+                entity=FinanceTransferGQLModel.from_dataclass(db_row),
+                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                location="FinanceTransferMutation.finance_transfer_delete"
+            )
+        )
+        return result

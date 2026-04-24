@@ -59,16 +59,20 @@ class BaseGQLModel:
         if hasattr(db_row, "model_dump"):
             db_row_dict = db_row.model_dump()
             print(f"from_pydantic: {db_row_dict}")
-        else:
+        elif dataclasses.is_dataclass(db_row):
             db_row_dict = dataclasses.asdict(db_row)
-            print(f"from_dataclass: {db_row_dict}")
+            # print(f"from_dataclass: {db_row_dict}")
+        else:
+            print(f"from_raw: {type(db_row)} = {db_row}")
+            return cls(**db_row) # assume it's already a dict
+            # db_row_dict = dataclasses.asdict(db_row)
+            # print(f"from_dataclass: {db_row_dict}")
         instance = cls(**db_row_dict)
         return instance
 
     @classmethod
     async def load_with_loader(cls, info: strawberry.types.Info, id: uuid.UUID):
         if id is None: return None
-
         _id = IDType(id) if isinstance(id, str) else id
         loader = cls.getLoader(info=info)
         db_row = await loader.load(_id)

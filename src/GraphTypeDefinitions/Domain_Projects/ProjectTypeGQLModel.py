@@ -37,6 +37,7 @@ from uoishelpers.gqlpermissions.RolePermissionSchemaExtension import createRBAC
 from src.DBDefinitions import ProjectTypeDBModel
 
 from ..BaseGQLModel import BaseGQLModel, IDType, Relation, createUuid
+from ..ApplicationInfo import ApplicationInfo
 
 @createInputs2
 class ProjectTypeInputFilter:
@@ -205,25 +206,41 @@ class ProjectTypeMutation:
     )
     async def project_type_insert(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project_type: ProjectTypeInsertGQLModel,
         user_roles: typing.List[dict],
         db_row: typing.Any,
         rbacobject_id: IDType,
     ) -> typing.Union[ProjectTypeGQLModel, InsertError[ProjectTypeGQLModel]]:
-        
-        rbac_id = createUuid()
-        rbac = await createRBAC(
-            info= info, 
-            rbacobjectId= rbac_id,
-            mastergroupId= rbacobject_id,
-            name= f"{project_type.name}-rbac",
-            # "roles": 
+        ProjectTypeService = info.ServiceCtx.Services.ProjectTypeService
+        result = await ProjectTypeService.ExecuteServiceMethod(
+            ProjectTypeService.CreateMasterProjectType(
+                ctx=info.context,
+                **dataclasses.asdict(project_type)
+            ),
+            OK=ProjectTypeGQLModel,
+            Error=lambda msg: InsertError[ProjectTypeGQLModel](
+                msg=msg,
+                code="bf1d3fbe-7c87-416b-875b-ea1e0828c22f",
+                location="ProjectTypeMutation.project_type_insert",
+                _input=project_type
+            )
         )
+        # rbac_id = createUuid()
+        # rbac = await createRBAC(
+        #     info= info, 
+        #     rbacobjectId= rbac_id,
+        #     mastergroupId= rbacobject_id,
+        #     name= f"{project_type.name}-rbac",
+        #     # "roles": 
+        # )
         # print(f"project_type_insert, {rbac}")
         # project_type.rbacobject_id = rbac_id
-        project_type.set_rbacobject_id(rbac_id)
-        return await Insert[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=project_type)
+        # project_type.set_rbacobject_id(rbac_id)
+        # return await Insert[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=project_type)
+
+        return result
+
     
 
     @strawberry.mutation(
@@ -243,11 +260,26 @@ class ProjectTypeMutation:
     )
     async def project_type_update(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project_type: ProjectTypeUpdateGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectTypeGQLModel, UpdateError[ProjectTypeGQLModel]]:
-        return await Update[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=project_type)
+        ProjectTypeService = info.ServiceCtx.Services.ProjectTypeService
+        result = await ProjectTypeService.ExecuteServiceMethod(
+            ProjectTypeService.Update(
+                ctx=info.context,
+                **dataclasses.asdict(project_type)
+            ),
+            OK=ProjectTypeGQLModel,
+            Error=lambda msg: UpdateError[ProjectTypeGQLModel](
+                msg=msg,
+                entity=ProjectTypeGQLModel.resolve_reference(info=info, id=project_type.id),
+                code="d1c8b9e7-5c8c-4a3b-9c8e-9a1e0828c22f",
+                location="ProjectTypeMutation.project_type_update",
+                _input=project_type
+            )
+        )
+        return result
     
 
     @strawberry.mutation(
@@ -264,9 +296,26 @@ class ProjectTypeMutation:
     )   
     async def project_type_delete(
         self,
-        info: strawberry.Info,
+        info: ApplicationInfo,
         project_type: ProjectTypeDeleteGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[ProjectTypeGQLModel]]:
-        return await Delete[ProjectTypeGQLModel].DoItSafeWay(info=info, entity=project_type)
+        ProjectTypeService = info.ServiceCtx.Services.ProjectTypeService
+        result = await ProjectTypeService.ExecuteServiceMethod(
+            ProjectTypeService.Delete(
+                ctx=info.context,
+                **dataclasses.asdict(project_type)
+            ),
+            OK=lambda: None,
+            Error=lambda msg: DeleteError[ProjectTypeGQLModel](
+                msg=msg,
+                entity=ProjectTypeGQLModel.resolve_reference(info=info, id=project_type.id),
+                code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
+                location="ProjectTypeMutation.project_type_delete",
+                _input=project_type
+            )
+        )
+        return result
     
+
+
