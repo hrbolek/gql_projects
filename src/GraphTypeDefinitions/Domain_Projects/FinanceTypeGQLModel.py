@@ -2,6 +2,7 @@ import asyncio
 import dataclasses
 import datetime
 import typing
+from sqlalchemy import event
 import strawberry
 
 import strawberry.types
@@ -201,22 +202,21 @@ class FinanceTypeMutation:
     async def finance_type_insert(
         self,
         info: ApplicationInfo,
-        event: FinanceTypeInsertGQLModel,
+        finance_type: FinanceTypeInsertGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTypeGQLModel, InsertError[FinanceTypeGQLModel]]:
-        FinanceTypeService = info.context.Services.FinanceTypeService
+        FinanceTypeService = info.ServiceCtx.Services.FinanceTypeService
         result = await FinanceTypeService.ExecuteServiceMethod(
             FinanceTypeService.Create(
-                ctx=info.context,
-                **dataclasses.asdict(event)
+                ctx=info.ServiceCtx,
+                entity=finance_type
             ),
-            OK=lambda project_type: project_type,
+            OK=lambda result: FinanceTypeGQLModel.from_dataclass(result),
             Error=lambda msg: InsertError[FinanceTypeGQLModel](
                 msg=msg,
-                entity=event,
                 code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
                 location="FinanceTypeMutation.finance_type_insert",
-                _input=event
+                _input=finance_type
             )
         )
         return result
@@ -236,22 +236,22 @@ class FinanceTypeMutation:
     async def finance_type_update(
         self,
         info: ApplicationInfo,
-        event: FinanceTypeUpdateGQLModel,
+        finance_type: FinanceTypeUpdateGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Union[FinanceTypeGQLModel, UpdateError[FinanceTypeGQLModel]]:
-        FinanceTypeService = info.context.Services.FinanceTypeService
+        FinanceTypeService = info.ServiceCtx.Services.FinanceTypeService
         result = await FinanceTypeService.ExecuteServiceMethod(
             FinanceTypeService.Update(
-                ctx=info.context,
-                **dataclasses.asdict(event)
+                ctx=info.ServiceCtx,
+                entity=finance_type
             ),
-            OK=lambda project_type: project_type,
+            OK=lambda result: FinanceTypeGQLModel.from_dataclass(result),
             Error=lambda msg: UpdateError[FinanceTypeGQLModel](
                 msg=msg,
-                entity=event,
+                _entity=FinanceTypeGQLModel.resolve_reference(info=info, id=finance_type.id),
                 code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
                 location="FinanceTypeMutation.finance_type_update",
-                _input=event
+                _input=finance_type
             )
         )
         return result
@@ -271,22 +271,22 @@ class FinanceTypeMutation:
     async def finance_type_delete(
         self,
         info: ApplicationInfo,
-        event: FinanceTypeDeleteGQLModel,
+        finance_type: FinanceTypeDeleteGQLModel,
         user_roles: typing.List[dict],
     ) -> typing.Optional[DeleteError[FinanceTypeGQLModel]]:
-        FinanceTypeService = info.context.Services.FinanceTypeService
+        FinanceTypeService = info.ServiceCtx.Services.FinanceTypeService
         result = await FinanceTypeService.ExecuteServiceMethod(
             FinanceTypeService.Delete(
-                ctx=info.context,
-                **dataclasses.asdict(event)
+                ctx=info.ServiceCtx,
+                entity=finance_type
             ),
-            OK=lambda: None,
+            OK=lambda result: None,
             Error=lambda msg: DeleteError[FinanceTypeGQLModel](
                 msg=msg,
-                entity=FinanceTypeGQLModel.resolve_reference(info=info, id=event.id),
+                _entity=FinanceTypeGQLModel.resolve_reference(info=info, id=finance_type.id),
                 code="e1d8c9f7-6c9c-4b4c-9d9e-9b2e0938d33f",
                 location="FinanceTypeMutation.finance_type_delete",
-                _input=event
+                _input=finance_type
             )
         )
         return result

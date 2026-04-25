@@ -94,10 +94,16 @@ def UUIDColumn(**kwargs):
 IDType = uuid.UUID
 
 class BaseDBModel(MappedAsDataclass, DeclarativeBase):
-    id: Mapped[IDType] = UUIDColumn(index=True, primary_key=True, default_factory=uuid.uuid4)
+    id: Mapped[IDType] = UUIDColumn(index=True, primary_key=True, default_factory=uuid7_factory, comment="primary key")
 
     created: Mapped[datetime.datetime] = mapped_column(default=None, nullable=True, server_default=sqlalchemy.sql.func.now(), comment="date time of creation")
-    lastchange: Mapped[datetime.datetime] = mapped_column(default=None, nullable=True, server_default=sqlalchemy.sql.func.now(), comment="date time stamp")
+    lastchange: Mapped[datetime.datetime] = mapped_column(
+        default=None, 
+        nullable=True, 
+        server_default=sqlalchemy.sql.func.now(), 
+        onupdate=sqlalchemy.sql.func.now(),
+        comment="date time stamp"
+    )
 
     createdby_id: Mapped[IDType] = UUIDFKey(ForeignKey("users.id"), comment="id of user who created this entity")
     changedby_id: Mapped[IDType] = UUIDFKey(ForeignKey("users.id"), comment="id of user who changed this entity")

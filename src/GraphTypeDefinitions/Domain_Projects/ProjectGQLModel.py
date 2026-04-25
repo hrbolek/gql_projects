@@ -384,10 +384,10 @@ class ProjectMutation:
         result = await ProjectService.ExecuteServiceMethod(
             ProjectService.Create(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(project),
-                rbacobject_id=rbacobject_id
+                entity=project,
+                # rbacobject_id=rbacobject_id
             ),
-            OK=ProjectGQLModel,
+            OK=lambda result: ProjectGQLModel.from_dataclass(result),
             Error=lambda msg: InsertError[ProjectGQLModel](
                 code="edbb8e7a-a769-4db3-88b5-9b28b50c99ef",
                 location="project_insert",
@@ -428,10 +428,10 @@ class ProjectMutation:
         result = await ProjectService.ExecuteServiceMethod(
             ProjectService.CreateMasterProject(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(project),
-                masterrbacobject_id=rbacobject_id
+                entity=project,
+                # masterrbacobject_id=rbacobject_id
             ),
-            OK=ProjectGQLModel,
+            OK=lambda result: ProjectGQLModel.from_dataclass(result),
             Error=lambda msg: InsertError[ProjectGQLModel](
                 code="4f885abd-4076-4d99-a749-a7db074b42dd",
                 location="project_master_insert",
@@ -469,9 +469,9 @@ class ProjectMutation:
         result = await ProjectService.ExecuteServiceMethod(
             ProjectService.Update(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(project),
+                entity=project,
             ),
-            OK=ProjectGQLModel,
+            OK=lambda result: ProjectGQLModel.from_dataclass(result),
             Error=lambda msg: UpdateError[ProjectGQLModel](
                 code="6915527e-a68f-40c8-8aff-23333e798091",
                 location="project_update",
@@ -511,7 +511,7 @@ class ProjectMutation:
         result = await ProjectService.ExecuteServiceMethod(
             ProjectService.Delete(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(project),
+                entity=project,
             ),
             OK=lambda result: None,
             Error=lambda msg: DeleteError[ProjectGQLModel](

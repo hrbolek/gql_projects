@@ -24,18 +24,24 @@ class FinanceService(BaseService[IDLoader[FinanceDBModel]]):
     
 
     @classmethod
-    async def CreateMasterFinance(cls, ctx, **data) -> typing.Optional[FinanceDBModel]:
+    async def CreateMasterFinance(cls, ctx, entity=None, **data) -> typing.Optional[FinanceDBModel]:
         from ..Domain_UG.RBACService import RBACService
-        rbacobject_id = data.pop("rbacobject_id", None)
+        rbacobject_id = entity.rbacobject_id if entity else None
         # rbacobject_id = data.get("rbacobject_id")
         if rbacobject_id is None:
             rbacobject = await RBACService.Create(ctx, masterrbacobject_id=None, name="TopFinance")
-            rbacobject_id = rbacobject["id"]
+            assert rbacobject is not None, "Failed to create RBAC object for master finance"
+            rbacobject_id = rbacobject.get("id")
+            assert rbacobject_id is not None, "RBAC object creation did not return an ID"
+            # entity.rbacobject_id = rbacobject_id
 
         finance = await cls.Create(
             ctx=ctx,
-            **data,
-            rbacobject_id=rbacobject_id,
-            masterfinance_id=None,
+            entity=entity,
+            extraAttributes={
+                **data,
+                "rbacobject_id": rbacobject_id,
+                "masterfinance_id": None,
+            }
         )
         return finance

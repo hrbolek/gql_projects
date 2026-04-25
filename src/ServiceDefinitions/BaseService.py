@@ -1,5 +1,6 @@
 import typing
 import sqlalchemy
+import traceback
 from uoishelpers.dataloaders.IDLoader import IDLoader
 
 from .ServiceContext  import ServiceContext
@@ -19,9 +20,15 @@ class BaseService(typing.Generic[T]):
         raise NotImplementedError("getLoader method must be implemented by subclass of BaseService")
     
     @classmethod
-    async def Create(cls, ctx: ServiceContext, **data) -> typing.Any:
+    async def Model(cls, ctx, **attributes) -> typing.Any:
         loader = await cls.getLoader(ctx)
-        result = await loader.insert(**data)
+        model = loader.getModel()(**attributes)
+        return model
+    
+    @classmethod
+    async def Create(cls, ctx: ServiceContext, entity, extraAttributes={}) -> typing.Any:
+        loader = await cls.getLoader(ctx)
+        result = await loader.insert(entity=entity, extraAttributes=extraAttributes)
         return result
         
     @classmethod
@@ -53,15 +60,15 @@ class BaseService(typing.Generic[T]):
         return result
     
     @classmethod
-    async def Update(cls, ctx: ServiceContext, id, **data) -> typing.Any:
+    async def Update(cls, ctx: ServiceContext, entity, extraValues={}) -> typing.Any:
         loader = await cls.getLoader(ctx)
-        result = await loader.update(id, **data)
+        result = await loader.update(entity=entity, extraValues=extraValues)
         return result
     
     @classmethod
-    async def Delete(cls, ctx: ServiceContext, id) -> typing.Any:
+    async def Delete(cls, ctx: ServiceContext, entity) -> typing.Any:
         loader = await cls.getLoader(ctx)
-        result = await loader.delete(id)
+        result = await loader.delete(entity.id)
         return result
 
     @classmethod
@@ -80,7 +87,18 @@ class BaseService(typing.Generic[T]):
                 msg=f"Database error: {e} code({e.code})"
             )
         except Exception as e:
+
+            tb = e.__traceback__
+            filename = tb.tb_frame.f_code.co_filename
+            lineno = tb.tb_lineno
+
+
+            frames = traceback.extract_tb(e.__traceback__)
+            origin = frames[-1]  # Get the last frame where the exception was raised
+            filename = origin.filename
+            lineno = origin.lineno
+
             code = getattr(e, "code", "unknown")
             return Error(
-                msg=f"Exception {e} code({e.code})"
+                msg=f"{filename}:{lineno} => {type(e).__name__}: {e} code({code})"
             )

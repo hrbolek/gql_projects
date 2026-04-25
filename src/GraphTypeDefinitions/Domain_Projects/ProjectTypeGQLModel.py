@@ -214,11 +214,12 @@ class ProjectTypeMutation:
     ) -> typing.Union[ProjectTypeGQLModel, InsertError[ProjectTypeGQLModel]]:
         ProjectTypeService = info.ServiceCtx.Services.ProjectTypeService
         result = await ProjectTypeService.ExecuteServiceMethod(
-            ProjectTypeService.CreateMasterProjectType(
-                ctx=info.context,
-                **dataclasses.asdict(project_type)
+            # ProjectTypeService.CreateMasterProjectType(
+            ProjectTypeService.Create(
+                ctx=info.ServiceCtx,
+                entity=project_type
             ),
-            OK=ProjectTypeGQLModel,
+            OK=lambda result: ProjectTypeGQLModel.from_dataclass(result),
             Error=lambda msg: InsertError[ProjectTypeGQLModel](
                 msg=msg,
                 code="bf1d3fbe-7c87-416b-875b-ea1e0828c22f",
@@ -262,15 +263,17 @@ class ProjectTypeMutation:
         self,
         info: ApplicationInfo,
         project_type: ProjectTypeUpdateGQLModel,
+        db_row: typing.Any,
+        rbacobject_id: IDType,
         user_roles: typing.List[dict],
     ) -> typing.Union[ProjectTypeGQLModel, UpdateError[ProjectTypeGQLModel]]:
         ProjectTypeService = info.ServiceCtx.Services.ProjectTypeService
         result = await ProjectTypeService.ExecuteServiceMethod(
             ProjectTypeService.Update(
-                ctx=info.context,
-                **dataclasses.asdict(project_type)
+                ctx=info.ServiceCtx,
+                entity=project_type
             ),
-            OK=ProjectTypeGQLModel,
+            OK=lambda result: ProjectTypeGQLModel.from_dataclass(result),
             Error=lambda msg: UpdateError[ProjectTypeGQLModel](
                 msg=msg,
                 entity=ProjectTypeGQLModel.resolve_reference(info=info, id=project_type.id),
@@ -303,10 +306,10 @@ class ProjectTypeMutation:
         ProjectTypeService = info.ServiceCtx.Services.ProjectTypeService
         result = await ProjectTypeService.ExecuteServiceMethod(
             ProjectTypeService.Delete(
-                ctx=info.context,
-                **dataclasses.asdict(project_type)
+                ctx=info.ServiceCtx,
+                entity=project_type
             ),
-            OK=lambda: None,
+            OK=lambda result: None,
             Error=lambda msg: DeleteError[ProjectTypeGQLModel](
                 msg=msg,
                 entity=ProjectTypeGQLModel.resolve_reference(info=info, id=project_type.id),

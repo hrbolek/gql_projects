@@ -79,6 +79,19 @@ async def FullContext(ContextBase, UserPatch):
     }
     return context_
 
+
+
+
+@pytest_asyncio.fixture
+async def ServiceCtx(FullContext):
+    from src.ServiceDefinitions.ServiceContext import ServiceContext
+    ctx = ServiceContext(
+        loaders=FullContext.get("loaders"),
+        user=FullContext.get("user"),
+        request=FullContext.get("request"),
+    )
+    return ctx
+
 @pytest.fixture
 def WhoAmIExtensionOverride(FullContext):
     from uoishelpers.schema import WhoAmIExtension
@@ -130,6 +143,7 @@ def RolePermissionSchemaExtensionOverride(FullContext):
 @pytest.fixture
 def SchemaExecutor(
     FullContext,
+    ServiceCtx,
     WhoAmIExtensionOverride,
     RolePermissionSchemaExtensionOverride
 ):
@@ -168,6 +182,7 @@ def SchemaExecutor(
             "roletype": {"name": "superadmin"}
         }]
     }
+    FullContext["ServiceCtx"] = ServiceCtx
     async def Execute(query, variable_values={}):
         result = await schema.execute(query=query, variable_values=variable_values, context_value=FullContext)
         value = {"data": result.data} 

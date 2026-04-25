@@ -1,5 +1,12 @@
 import pytest
+import uuid
 import logging
+
+from src.ServiceDefinitions.Domain_UG.RBACService import RBACService
+from src.ServiceDefinitions.Domain_Projects.FinanceTransferService import FinanceTransferService
+from src.ServiceDefinitions.Domain_Projects.FinanceService import FinanceService
+
+from tests.authorization_utils import patch_service_method, make_authorization_test, ServicePatcher
 
 from .asserts import assert_insert, assert_update, assert_delete, assert_same, assert_read
 
@@ -46,15 +53,36 @@ default_roles = {
     ]
 }
 
+# def make_finance_transfer_authorization_test():
+#     return make_authorization_test(
+#         mutation_name="financeTransferCreate",
+#         service_class=FinanceTransferService,
+#         service_method="Create",
+#         allowed_roles=["administrátor", "superadmin"],
+#         denied_roles=["procesní administrátor"],
+#         dummy_args={
+#             "finance_source_id": "00000000-0000-0000-0000-000000000001",
+#             "finance_destination_id": "00000000-0000-0000-0000-000000000002",
+#             "amount": 100.0
+#         }
+#     )
+
 @pytest.mark.asyncio
 async def test_finance_insert_success(
     SchemaExecutor, 
     CreateMutation, 
     WhoAmIExtensionOverride, 
-    RolePermissionSchemaExtensionOverride
+    RolePermissionSchemaExtensionOverride,
+    ServicePatcher
 ):
     WhoAmIExtensionOverride.set_user(default_user)
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
+
+    ServicePatcher(
+        RBACService,
+        "Create",
+        return_value={"id": uuid.uuid4()}
+    )
 
     finance = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
@@ -72,10 +100,19 @@ async def test_finance_update_success(
     SchemaExecutor, 
     CreateMutation, 
     WhoAmIExtensionOverride, 
-    RolePermissionSchemaExtensionOverride
+    RolePermissionSchemaExtensionOverride,
+    ServicePatcher
+
 ):
     WhoAmIExtensionOverride.set_user(default_user)
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
+
+    ServicePatcher(
+        RBACService,
+        "Create",
+        return_value={"id": uuid.uuid4()}
+    )
+
     finance = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
         "masterfinanceId": "5f542217-59b6-4a73-afa5-8df74b7a1399",
@@ -103,10 +140,17 @@ async def test_finance_delete(
     SchemaExecutor, 
     CreateMutation, 
     WhoAmIExtensionOverride, 
-    RolePermissionSchemaExtensionOverride
+    RolePermissionSchemaExtensionOverride,
+    ServicePatcher
 ):
     WhoAmIExtensionOverride.set_user(default_user)
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
+
+    ServicePatcher(
+        RBACService,
+        "Create",
+        return_value={"id": uuid.uuid4()}
+    )
 
     finance = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 

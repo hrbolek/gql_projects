@@ -1,6 +1,9 @@
 import typing
 import uuid
 import asyncio
+
+from types import SimpleNamespace
+
 from uoishelpers.dataloaders.IDLoader import IDLoader
 
 from ...DBDefinitions import FinanceTransferDBModel
@@ -10,6 +13,7 @@ class FinanceTransferService(BaseService[IDLoader[FinanceTransferDBModel]]):
     
     @classmethod
     async def getLoader(cls, ctx: ServiceContext) -> IDLoader[FinanceTransferDBModel]:
+        # print(f"{list(ctx.loaders.keys())} are the available loaders in context")
         return ctx.loaders.FinanceTransferDBModel
 
     @classmethod
@@ -53,16 +57,19 @@ class FinanceTransferService(BaseService[IDLoader[FinanceTransferDBModel]]):
         await loader.update(finance_source, extraValues={"value": finance_source.value - amount})
         await loader.update(finance_destination, extraValues={"value": finance_destination.value + amount})
         finance_transfer = await loader.insert(
-            finance_source_id=finance_source_id,
-            finance_destination_id=finance_destination_id,
-            amount=amount,
-            **data
+            entity=SimpleNamespace(
+                finance_source_id=finance_source_id,
+                finance_destination_id=finance_destination_id,
+                amount=amount
+            ),
+            extraAttributes=data
         )
         return finance_transfer
     
     @classmethod
-    async def Delete(cls, ctx: ServiceContext, id: uuid.UUID) -> typing.Any:
+    async def Delete(cls, ctx: ServiceContext, entity) -> typing.Any:
         loader = await cls.getLoader(ctx)
+        id = entity.id
         finance_transfer = await loader.load(id)
         if finance_transfer is None:
             raise ServiceExceptionWithCode(f"Finance transfer with id {id} does not exist", code="f6b5e693-413a-44f0-9cc6-2538619f5ad2")

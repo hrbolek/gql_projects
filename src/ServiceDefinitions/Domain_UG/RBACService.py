@@ -43,9 +43,9 @@ class RBACService(BaseOuterService):
 
     @classmethod
     async def Create(cls, ctx, 
-        id: uuid.UUID,
         masterrbacobject_id: uuid.UUID,
         name: str,
+        id: uuid.UUID = None,
         roles: typing.List[dict] = None,
     ) -> typing.Any:
         if id is None:

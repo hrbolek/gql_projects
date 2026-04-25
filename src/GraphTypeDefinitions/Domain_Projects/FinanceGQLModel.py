@@ -349,15 +349,15 @@ class FinanceMutation:
         result = await FinanceService.ExecuteServiceMethod(
             FinanceService.CreateMasterFinance(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(finance)
+                entity=finance
             ),
             Error=lambda msg: InsertError[FinanceGQLModel](
-                code="d1660087-a7a9-471f-b2a6-58c2e42c9e6a",
-                location="finance_insert",
+                code="f6b2bdca-0a00-45d0-accc-24d1bb8af00f",
+                location="finance_master_insert",
                 msg=msg,
                 _input=finance
             ),
-            OK=FinanceGQLModel
+            OK=lambda result: FinanceGQLModel.from_dataclass(result)
         )
         return result
 
@@ -393,7 +393,7 @@ class FinanceMutation:
         result = await FinanceService.ExecuteServiceMethod(
             FinanceService.CreateMasterFinance(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(finance)
+                entity=finance
             ),
             Error=lambda msg: InsertError[FinanceGQLModel](
                 code="d1660087-a7a9-471f-b2a6-58c2e42c9e6a",
@@ -401,7 +401,7 @@ class FinanceMutation:
                 msg=msg,
                 _input=finance
             ),
-            OK=FinanceGQLModel
+            OK=lambda result: FinanceGQLModel.from_dataclass(result)
         )
         return result
 
@@ -436,16 +436,16 @@ class FinanceMutation:
         result = await FinanceService.ExecuteServiceMethod(
             FinanceService.Update(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(finance)
+                entity=finance
             ),
             Error=lambda msg: UpdateError[FinanceGQLModel](
                 code="e1660087-a7a9-471f-b2a6-58c2e42c9e6a",
                 location="finance_update",
                 msg=msg,
                 _input=finance,
-                entity=ProjectGQLModel.from_dataclass(db_row)
+                _entity=ProjectGQLModel.from_dataclass(db_row)
             ),
-            OK=FinanceGQLModel
+            OK=lambda result: FinanceGQLModel.from_dataclass(result)
         )
         return result
 
@@ -480,16 +480,16 @@ class FinanceMutation:
         result = await FinanceService.ExecuteServiceMethod(
             FinanceService.Delete(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(finance)
+                entity=finance
             ),
             Error=lambda msg: DeleteError[FinanceGQLModel](
                 code="f1660087-a7a9-471f-b2a6-58c2e42c9e6a",
                 location="finance_delete",
                 msg=msg,
                 _input=finance,
-                entity=ProjectGQLModel.from_dataclass(db_row)
+                _entity=ProjectGQLModel.from_dataclass(db_row)
             ),
-            OK=lambda: None
+            OK=lambda result: None
         )
         return result
     

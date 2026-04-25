@@ -188,14 +188,14 @@ class ProjectDependencyMutation:
         ProjectDependencyService = info.ServiceCtx.Services.ProjectDependencyService
         result = await ProjectDependencyService.ExecuteServiceMethod(
             ProjectDependencyService.Create(
-                ctx=info.context,
-                **dataclasses.asdict(project_dependency)
+                ctx=info.ServiceCtx,
+                entity=project_dependency
             ),
-            OK=ProjectDependencyGQLModel,
+            OK=lambda result: ProjectDependencyGQLModel.from_dataclass(result),
             Error=lambda msg: InsertError[ProjectDependencyGQLModel](
                 msg=msg,
                 _input=project_dependency,
-                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                code="3a9b8eb5-88c9-4432-9c0c-a48c53a43179",
                 location="ProjectDependencyMutation.project_dependency_insert"
             )
         )
@@ -229,10 +229,10 @@ class ProjectDependencyMutation:
         ProjectDependencyService = info.ServiceCtx.Services.ProjectDependencyService
         result = await ProjectDependencyService.ExecuteServiceMethod(
             ProjectDependencyService.Update(
-                ctx=info.context,
-                **dataclasses.asdict(project_dependency)
+                ctx=info.ServiceCtx,
+                entity=project_dependency
             ),
-            OK=ProjectDependencyGQLModel,
+            OK=lambda result: ProjectDependencyGQLModel.from_dataclass(result),
             Error=lambda msg: UpdateError[ProjectDependencyGQLModel](
                 msg=msg,
                 _input=project_dependency,
@@ -270,10 +270,10 @@ class ProjectDependencyMutation:
         ProjectDependencyService = info.ServiceCtx.Services.ProjectDependencyService
         result = await ProjectDependencyService.ExecuteServiceMethod(
             ProjectDependencyService.Delete(
-                ctx=info.context,
-                **dataclasses.asdict(project_dependency)
+                ctx=info.ServiceCtx,
+                entity=project_dependency
             ),
-            OK=lambda: None,
+            OK=lambda result: None,
             Error=lambda msg: DeleteError[ProjectDependencyGQLModel](
                 msg=msg,
                 _input=project_dependency,

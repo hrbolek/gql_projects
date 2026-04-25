@@ -8,6 +8,7 @@ class BaseOuterService(BaseService):
     @classmethod
     async def ug_client(cls, ctx: ServiceContext, query, **params):
         ug_client = ctx.ug_client
+        assert ug_client is not None, "UG client is not available in the service context"
         return await ug_client(query=query, variables=params)
 
     @classmethod

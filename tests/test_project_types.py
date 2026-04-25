@@ -1,7 +1,11 @@
 import pytest
+import uuid
 import logging
 
 from .asserts import assert_insert, assert_update, assert_delete, assert_same, assert_read
+from .authorization_utils import ServicePatcher
+
+from src.ServiceDefinitions.Domain_UG.RBACService import RBACService
 
 async def project_type_insert(SchemaExecutor, CreateMutation, variables):
     query = CreateMutation("projectTypeInsert")
@@ -51,17 +55,23 @@ async def test_projecttype_insert_success(
     SchemaExecutor, 
     CreateMutation, 
     WhoAmIExtensionOverride, 
-    RolePermissionSchemaExtensionOverride
+    RolePermissionSchemaExtensionOverride,
+    ServicePatcher
 ):
     WhoAmIExtensionOverride.set_user(default_user)
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
+    ServicePatcher(
+        RBACService,
+        "Create",
+        return_value={"id": uuid.uuid4()}
+    )
 
     project_type = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
-        "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
+        "mastertypeId": "818c8919-99b5-4244-bdfe-f28013af3717",
         "name": "projecttype type X"
-        }
+    }
     result = await project_type_insert(SchemaExecutor, CreateMutation, project_type)
     project_type_inserted = assert_insert(result)
 
@@ -74,17 +84,23 @@ async def test_projecttype_update_success(
     SchemaExecutor, 
     CreateMutation, 
     WhoAmIExtensionOverride, 
-    RolePermissionSchemaExtensionOverride
+    RolePermissionSchemaExtensionOverride,
+    ServicePatcher
 ):
     WhoAmIExtensionOverride.set_user(default_user)
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
-
+    ServicePatcher(
+        RBACService,
+        "Create",
+        return_value={"id": uuid.uuid4()}
+    )
+    
     project_type = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
-        "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
+        "mastertypeId": "818c8919-99b5-4244-bdfe-f28013af3717",
         "name": "projecttype type X"
-        }
+    }
     delta = {
         **project_type,
         "name": "projecttype type Y"
@@ -110,17 +126,24 @@ async def test_projecttype_delete(
     SchemaExecutor, 
     CreateMutation, 
     WhoAmIExtensionOverride, 
-    RolePermissionSchemaExtensionOverride
+    RolePermissionSchemaExtensionOverride,
+    ServicePatcher
 ):
     WhoAmIExtensionOverride.set_user(default_user)
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
+    ServicePatcher(
+        RBACService,
+        "Create",
+        return_value={"id": uuid.uuid4()}
+    )
+    
 
     project_type = {
         "id": "527f6169-a788-4757-8ad0-79f7348e0174", 
-        "mastertypeId": "9e37059c-de2c-4112-9009-559c8b0396f1",
+        "mastertypeId": "818c8919-99b5-4244-bdfe-f28013af3717",
         "name": "projecttype type X"
-        }
+    }
     result = await project_type_insert(SchemaExecutor, CreateMutation, project_type)
     project_type_inserted = assert_insert(result)
 

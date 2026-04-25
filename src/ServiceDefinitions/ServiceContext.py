@@ -1,22 +1,55 @@
 import dataclasses
 import typing
 
-from .Domain_UG.GroupService import GroupService as GS
-from .Domain_Projects.ProjectService import ProjectService as PS
-from .Domain_Projects.ProjectTypeService import ProjectTypeService as PTS
-from .Domain_Projects.FinanceService import FinanceService as FS
-from .Domain_Projects.FinanceTypeService import FinanceTypeService as FTS
-from .Domain_Projects.FinanceTransferService import FinanceTransferService as F2FS
 from ..Dataloaders import LoaderMap
+
+if typing.TYPE_CHECKING:
+    from .Domain_UG.GroupService import GroupService as GS
+    from .Domain_Projects.ProjectService import ProjectService as PS
+    from .Domain_Projects.ProjectTypeService import ProjectTypeService as PTS
+    from .Domain_Projects.ProjectDependencyService import ProjectDependencyService as PDS
+    from .Domain_Projects.FinanceService import FinanceService as FS
+    from .Domain_Projects.FinanceTypeService import FinanceTypeService as FTS
+    from .Domain_Projects.FinanceTransferService import FinanceTransferService as F2FS
 
 @dataclasses.dataclass(frozen=True)
 class ServiceRegistry:
-    ProjectService: type[PS] = PS
-    GroupService: type[GS] = GS
-    FinanceService: type[FS] = FS
-    FinanceTypeService: type[FTS] = FTS
-    FinanceTransferService: type[F2FS] = F2FS
-    ProjectTypeService: type[PTS] = PTS
+
+    @property
+    def ProjectService(self) -> type["PS"]:
+        from .Domain_Projects.ProjectService import ProjectService as PS
+        return PS
+    
+    @property
+    def ProjectTypeService(self) -> type["PTS"]:
+        from .Domain_Projects.ProjectTypeService import ProjectTypeService as PTS
+        return PTS
+    
+    @property
+    def ProjectDependencyService(self) -> type["PDS"]:
+        from .Domain_Projects.ProjectDependencyService import ProjectDependencyService as PDS
+        return PDS
+    
+    @property
+    def GroupService(self) -> type["GS"]:
+        from .Domain_UG.GroupService import GroupService as GS
+        return GS
+    
+    @property
+    def FinanceService(self) -> type["FS"]:
+        from .Domain_Projects.FinanceService import FinanceService as FS
+        return FS
+    
+    @property
+    def FinanceTypeService(self) -> type["FTS"]:
+        from .Domain_Projects.FinanceTypeService import FinanceTypeService as FTS
+        return FTS  
+    
+    @property
+    def FinanceTransferService(self) -> type["F2FS"]:
+        from .Domain_Projects.FinanceTransferService import FinanceTransferService as F2FS
+        return F2FS
+    
 
 
 SERVICES = ServiceRegistry()

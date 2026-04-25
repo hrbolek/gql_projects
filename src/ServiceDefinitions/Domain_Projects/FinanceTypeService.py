@@ -1,8 +1,6 @@
 import typing
 from uoishelpers.dataloaders.IDLoader import IDLoader
 
-from DBDefinitions.ProjectDBModel import ProjectDBModel
-
 from ...DBDefinitions import FinanceTypeDBModel
 from ..BaseService import BaseService, ServiceContext
 

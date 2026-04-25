@@ -57,9 +57,9 @@ async def test_project_dependency_insert_success(
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
     project_dependency = {
-        "previousId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
-        "nextId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
-        }
+        "nextId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
+        "previousId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
+    }
     result = await project_dependency_insert(SchemaExecutor, CreateMutation, project_dependency)
     project_dependency_inserted = assert_insert(result)
 
@@ -77,11 +77,14 @@ async def test_project_dependency_insert_failed(
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
     project_dependency = {
-        "previousId": "ad43f501-ffc7-40e1-b6a2-a0199021e86b",
+        "previousId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
         "nextId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
-        }
+    }
     result = await project_dependency_insert(SchemaExecutor, CreateMutation, project_dependency)
-    project_dependency_inserted = assert_typename_with_error(result, code="16f66af3-052e-4ac8-8b07-035a2a5d9114")
+    project_dependency_inserted = assert_typename_with_error(
+        result, 
+        code="3a9b8eb5-88c9-4432-9c0c-a48c53a43179"
+    )
 
 
 @pytest.mark.asyncio
@@ -96,9 +99,9 @@ async def test_project_dependency_update_success(
 
 
     project_dependency = {
-        "previousId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
-        "nextId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
-        }
+        "nextId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
+        "previousId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
+    }
     delta = {
     }
     result = await project_dependency_insert(SchemaExecutor, CreateMutation, project_dependency)
@@ -128,9 +131,9 @@ async def test_project_dependency_delete(
     RolePermissionSchemaExtensionOverride.set_response(default_roles)
 
     project_dependency = {
-        "previousId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
-        "nextId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
-        }
+        "nextId": "a3a7613d-f86c-43e3-a2cb-4d725807e5f4",
+        "previousId": "360cd2e9-b914-4e56-bc61-19bb7a70ff63"
+    }
 
     result = await project_dependency_insert(SchemaExecutor, CreateMutation, project_dependency)
     project_dependency_inserted = assert_insert(result)

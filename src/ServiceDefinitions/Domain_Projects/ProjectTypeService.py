@@ -11,19 +11,20 @@ class ProjectTypeService(BaseService[IDLoader[ProjectTypeDBModel]]):
         return ctx.loaders.ProjectTypeDBModel
 
     @classmethod
-    async def CreateMasterProjectType(cls, ctx, **data) -> typing.Optional[ProjectTypeDBModel]:
+    async def CreateMasterProjectType(cls, ctx, entity) -> typing.Optional[ProjectTypeDBModel]:
         from ..Domain_UG.RBACService import RBACService
-        rbacobject_id = data.pop("rbacobject_id", None)
+        rbacobject_id = entity.rbacobject_id
         # rbacobject_id = data.get("rbacobject_id")
         if rbacobject_id is None:
             rbacobject = await RBACService.Create(ctx, masterrbacobject_id=None, name="TopProjectType")
-            rbacobject_id = rbacobject["id"]
+            entity.rbacobject_id = rbacobject["id"]
 
         projecttype = await cls.Create(
             ctx=ctx,
-            **data,
-            rbacobject_id=rbacobject_id,
-            masterprojecttype_id=None,
+            entity=entity,
+            extraAttributes={
+                "mastertype_id": None,
+            }
         )
         return projecttype
     

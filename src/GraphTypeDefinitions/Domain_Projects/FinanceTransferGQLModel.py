@@ -230,11 +230,11 @@ class FinanceTransferMutation:
                 finance_destination_id=finance_transfer.finance_destination_id,
                 amount=finance_transfer.amount
             ),
-            OK=FinanceTransferGQLModel,
+            OK=lambda result: FinanceTransferGQLModel.from_dataclass(result),
             Error=lambda msg: InsertError[FinanceTransferGQLModel](
                 msg=msg,
                 _input=finance_transfer,
-                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                code="46084b9a-324d-4751-b2fd-a5f4a8740a99",
                 location="FinanceTransferMutation.finance_transfer_insert"
             )
         )
@@ -272,14 +272,14 @@ class FinanceTransferMutation:
         result = await FinanceTransferService.ExecuteServiceMethod(
             FinanceTransferService.Update(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(finance_transfer)
+                entity=finance_transfer
             ),
-            OK=FinanceTransferGQLModel,
+            OK=lambda result: FinanceTransferGQLModel.from_dataclass(result),
             Error=lambda msg: UpdateError[FinanceTransferGQLModel](
                 msg=msg,
                 _input=finance_transfer,
-                entity=FinanceTransferGQLModel.from_dataclass(db_row),
-                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                _entity=FinanceTransferGQLModel.from_dataclass(db_row),
+                code="e00bdc3b-e13e-496f-bc7d-d847c517f41e",
                 location="FinanceTransferMutation.finance_transfer_update"
             )
         )
@@ -316,14 +316,14 @@ class FinanceTransferMutation:
         result = await FinanceTransferService.ExecuteServiceMethod(
             FinanceTransferService.Delete(
                 ctx=info.ServiceCtx,
-                **dataclasses.asdict(finance_transfer)
+                entity=finance_transfer
             ),
-            OK=lambda: None,
+            OK=lambda result: None,
             Error=lambda msg: DeleteError[FinanceTransferGQLModel](
                 msg=msg,
                 _input=finance_transfer,
-                entity=FinanceTransferGQLModel.from_dataclass(db_row),
-                code="16f66af3-052e-4ac8-8b07-035a2a5d9114",
+                _entity=FinanceTransferGQLModel.from_dataclass(db_row),
+                code="d5deed43-bbdf-4a5a-9259-35cf7556ca7e",
                 location="FinanceTransferMutation.finance_transfer_delete"
             )
         )

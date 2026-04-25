@@ -15,12 +15,15 @@ class ProjectDependencyService(BaseService[IDLoader[ProjectDependencyDBModel]]):
     @classmethod
     async def Create(cls, 
         ctx: ServiceContext, 
-        previous_id: uuid.UUID,
-        next_id: uuid.UUID,
-        id: typing.Optional[uuid.UUID] = None,
-        **data
+        entity: typing.Optional[ProjectDependencyDBModel],
+        
     ) -> typing.Any:
         loader = await cls.getLoader(ctx)
+
+        previous_id = entity.previous_id if entity else None
+        next_id = entity.next_id if entity else None
+        id = entity.id if entity else None
+
         exists = await loader.filter_by(previous_id=previous_id, next_id=next_id)
         exists = list(exists)
         if exists:
@@ -38,10 +41,8 @@ class ProjectDependencyService(BaseService[IDLoader[ProjectDependencyDBModel]]):
             raise ServiceExceptionWithCode(f"Next project with id {next_id} does not exist", code="4ed51fa5-62f6-4188-97dc-f3ed074ba133")
         if previous_project.masterproject_id != next_project.masterproject_id:
             raise ServiceExceptionWithCode(f"Project {next_id} cannot depend on project {previous_id} from a different master project", code="a1b2c3d4-5678-9012-3456-789012345678")
+        
         result = await loader.insert(
-            previous_id=previous_id,
-            next_id=next_id,
-            id=id,
-            **data
+            entity=entity
         )
         return result
