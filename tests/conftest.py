@@ -234,7 +234,7 @@ async def CreateQuery(Sdl):
         query = build_query_scalar(Sdl, name)
         if not query:
             query = build_query_page(Sdl, name)
-        assert query is not None, f"Failed to build mutation for {name}"
+        assert query is not None, f"Failed to build query for {name}"
         logging.info(f"query {name}\n{query}")
         return query
     return createQuery
